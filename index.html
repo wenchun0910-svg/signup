@@ -558,6 +558,9 @@
                 vAct.classList.remove('hidden'); vUsr.classList.add('hidden');
                 tAct.classList.add('border-matcha', 'text-matcha'); tAct.classList.remove('border-transparent', 'text-gray-500');
                 tUsr.classList.remove('border-matcha', 'text-matcha'); tUsr.classList.add('border-transparent', 'text-gray-500');
+                
+                // 【新增這一行】確保切換到活動頁面或登入成功時，會根據新身分重新繪製卡片按鈕
+                renderActivities(); 
             } else {
                 vAct.classList.add('hidden'); vUsr.classList.remove('hidden');
                 tUsr.classList.add('border-matcha', 'text-matcha'); tUsr.classList.remove('border-transparent', 'text-gray-500');

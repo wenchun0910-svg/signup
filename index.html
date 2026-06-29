@@ -109,7 +109,6 @@
             <button id="btn-back-to-app" class="w-full bg-washi hover:bg-kin hover:text-white text-sumi font-bold py-2 px-4 rounded-sm transition-colors mb-4 border border-kin shadow-sm">
                 返回活動列表 (訪客瀏覽)
             </button>
-            <p class="text-xs text-gray-400 text-center mt-2 border-t border-gray-200 pt-2">註：系統初始會自動建立 admin / admin 帳號，其餘需由管理員匯入。</p>
         </div>
     </div>
 
@@ -678,17 +677,26 @@
                     deadlineText = `(期限：${act.deadline} ${isExpired ? '- 已截止' : ''})`;
                 }
 
+                // 新增：將附件按鈕提取到列表上
+                let attachmentsHTML = "";
+                if (act.attachments && act.attachments.length > 0) {
+                    act.attachments.forEach(att => {
+                        attachmentsHTML += `<a href="${att.url}" target="_blank" class="text-asagi hover:text-white hover:bg-asagi text-sm font-bold ml-1 md:ml-2 border border-asagi px-2 py-0.5 rounded-sm inline-flex items-center gap-1 transition-colors" title="${att.name.replace(/</g, "&lt;")}">📎 ${att.name.replace(/</g, "&lt;")}</a>`;
+                    });
+                }
+
                 const listRow = document.createElement('div');
                 // 使用簡潔的條列式背景與底線
                 listRow.className = "bg-white border-b-2 border-kin border-dashed p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:bg-washi/40 transition-colors";
                 
                 let rowHTML = `
-                    <div class="flex items-center flex-wrap gap-x-2 gap-y-1 w-full md:w-auto">
+                    <div class="flex items-center flex-wrap gap-x-2 gap-y-2 w-full md:w-auto">
                         <span class="text-kin text-sm">❁</span>
                         <!-- 將名稱改為可點擊超連結，點擊觸發 btn-view-desc -->
                         <button class="btn-view-desc text-lg md:text-xl font-bold text-sumi hover:text-matcha underline-offset-4 hover:underline text-left leading-snug transition-colors" data-id="${act.id}">
                             ${act.title.replace(/</g, "&lt;")}
                         </button>
+                        ${attachmentsHTML}
                         <span class="text-sm font-bold ${isExpired ? 'text-shu' : 'text-gray-500'} ml-1 md:ml-3">
                             ${deadlineText}
                         </span>

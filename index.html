@@ -33,7 +33,7 @@
         }
     </script>
 
-    <!-- Quill (Rich Text Editor) -->
+    <!-- Quill (Rich Text Editor) - 統一使用 Quill，最穩定且支援度高 -->
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
 
@@ -65,19 +65,13 @@
             height: 250px;
         }
         
-        /* 保留檢視模式的 Quill 樣式 */
-        .ql-editor {
-            white-space: pre-wrap;
-        }
+        /* 檢視模式的 Quill 樣式 */
+        .ql-editor { white-space: pre-wrap; }
         .activity-desc table { border-collapse: collapse; width: 100%; }
         .activity-desc table th, .activity-desc table td { border: 1px solid #c4a052; padding: 8px; }
         
-        /* 標題特定圖示調整 */
-        .title-icon {
-            font-size: 1.2em;
-            line-height: 1;
-            margin-right: 4px;
-        }
+        /* 標題圖示 */
+        .title-icon { font-size: 1.2em; line-height: 1; margin-right: 4px; }
     </style>
 </head>
 <body class="font-serif min-h-screen flex flex-col">
@@ -115,7 +109,7 @@
             <button id="btn-back-to-app" class="w-full bg-washi hover:bg-kin hover:text-white text-sumi font-bold py-2 px-4 rounded-sm transition-colors mb-4 border border-kin shadow-sm">
                 返回活動列表 (訪客瀏覽)
             </button>
-            <p class="text-xs text-gray-400 text-center mt-2 border-t border-gray-200 pt-2">註：系統初始會自動建立 admin / admin 帳號，其餘帳號需由管理員匯入。</p>
+            <p class="text-xs text-gray-400 text-center mt-2 border-t border-gray-200 pt-2">註：系統初始會自動建立 admin / admin 帳號，其餘需由管理員匯入。</p>
         </div>
     </div>
 
@@ -158,7 +152,6 @@
         <main class="max-w-6xl mx-auto px-4 py-8 w-full flex-grow">
             <!-- 活動列表區塊 -->
             <section id="view-activities">
-                <!-- 更新為使用者指定的主視覺標題設計 -->
                 <div class="flex justify-between items-end mb-6 border-b-[3px] border-kin pb-3">
                     <h2 class="text-2xl md:text-4xl font-black text-sumi tracking-wider flex items-center">
                         <span class="title-icon text-sumi">✿</span> 班級活動列表
@@ -178,11 +171,9 @@
                     </h2>
                 </div>
                 
-                <!-- 新增帳號 (單一與大量) -->
+                <!-- 新增帳號 -->
                 <div class="bg-white rounded-sm japanese-border shadow-sm p-4 mb-6">
                     <h3 class="text-lg font-bold text-sumi mb-4 border-b border-gray-200 pb-2">新增使用者 (學生/家長)</h3>
-                    
-                    <!-- 單筆新增 -->
                     <div class="flex flex-wrap gap-4 items-end mb-6">
                         <div>
                             <label class="block text-sm font-bold mb-1">帳號</label>
@@ -207,8 +198,8 @@
                     <!-- 大量匯入 -->
                     <div class="border-t border-gray-200 pt-4">
                         <h4 class="text-md font-bold text-sumi mb-2">批次大量匯入</h4>
-                        <p class="text-xs text-gray-500 mb-2">請輸入 CSV 格式：<code>帳號,密碼,角色</code> (每行一筆，角色可省略預設為 student)</p>
-                        <textarea id="input-bulk-users" class="w-full p-2 border border-kin rounded-sm mb-2 h-24 bg-washi" placeholder="stu01,pwd123,student&#10;stu02,pwd123"></textarea>
+                        <p class="text-xs text-gray-500 mb-2">請輸入 CSV 格式：<code>帳號,密碼,角色</code></p>
+                        <textarea id="input-bulk-users" class="w-full p-2 border border-kin rounded-sm mb-2 h-24 bg-washi" placeholder="stu01,pwd123,student"></textarea>
                         <button id="btn-bulk-import" class="bg-asagi text-white px-4 py-2 rounded-sm font-bold">批次匯入</button>
                         <span id="bulk-import-msg" class="text-sm font-bold ml-2"></span>
                     </div>
@@ -232,7 +223,7 @@
         </main>
     </div>
 
-    <!-- 檢視活動說明 Modal (學生/家長用來開新視窗觀看) -->
+    <!-- 檢視活動說明 Modal (學生/家長/訪客用來開新視窗觀看) -->
     <div id="modal-view-activity" class="hidden fixed inset-0 modal-overlay z-[50] flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-4xl max-h-[90vh] flex flex-col rounded-sm japanese-border shadow-2xl">
             <div class="p-4 border-b border-kin flex justify-between items-center bg-washi">
@@ -242,12 +233,37 @@
             <div class="p-2 bg-gray-50 border-b border-kin px-6">
                 <span id="view-deadline" class="text-sm font-bold tracking-wide"></span>
             </div>
-            <!-- 套用 ql-editor 確保排版樣式正確顯示 -->
-            <div class="p-6 flex-grow overflow-y-auto activity-desc ql-editor bg-white" id="view-content">
-                <!-- 內容動態載入 -->
-            </div>
+            <div class="p-6 flex-grow overflow-y-auto activity-desc ql-editor bg-white" id="view-content"></div>
             <div class="p-4 border-t border-kin flex justify-end bg-washi">
                 <button id="btn-close-view-bottom" class="px-6 py-2 border-2 border-sumi text-sumi hover:bg-kin hover:text-white hover:border-kin transition-colors rounded-sm font-bold">關閉視窗</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 管理員檢視報名結果 Modal -->
+    <div id="modal-view-results" class="hidden fixed inset-0 modal-overlay z-[50] flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-2xl max-h-[90vh] flex flex-col rounded-sm japanese-border shadow-2xl">
+            <div class="p-4 border-b border-kin flex justify-between items-center bg-washi">
+                <h3 id="results-title" class="text-lg md:text-xl font-bold text-sumi leading-snug"></h3>
+                <button id="btn-close-results" class="text-2xl hover:text-shu transition-colors">&times;</button>
+            </div>
+            <div class="p-4 bg-white flex justify-between items-center border-b border-gray-200">
+                <div class="text-sm font-bold text-sumi" id="results-stats"></div>
+                <button id="btn-export-csv" class="bg-asagi hover:bg-blue-600 text-white px-3 py-1.5 rounded-sm font-bold text-sm shadow-sm transition-colors">匯出 Excel (CSV)</button>
+            </div>
+            <div class="p-4 flex-grow overflow-y-auto bg-gray-50">
+                <table class="w-full text-left border-collapse bg-white shadow-sm text-sm">
+                    <thead>
+                        <tr class="bg-washi border-b border-kin">
+                            <th class="p-2 font-bold w-1/2">帳號 (名稱)</th>
+                            <th class="p-2 font-bold w-1/2">報名狀態</th>
+                        </tr>
+                    </thead>
+                    <tbody id="results-table-body"></tbody>
+                </table>
+            </div>
+            <div class="p-4 border-t border-kin flex justify-end bg-washi">
+                <button id="btn-close-results-bottom" class="px-4 py-2 border border-sumi text-sumi hover:bg-gray-100 transition-colors rounded-sm font-bold">關閉</button>
             </div>
         </div>
     </div>
@@ -256,7 +272,7 @@
     <div id="modal-activity" class="hidden fixed inset-0 modal-overlay z-[50] flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-4xl max-h-[90vh] flex flex-col rounded-sm japanese-border">
             <div class="p-4 border-b border-kin flex justify-between items-center bg-washi">
-                <h3 id="modal-title" class="text-xl font-bold text-sumi">新增/編輯活動</h3>
+                <h3 id="modal-edit-title" class="text-xl font-bold text-sumi">新增/編輯活動</h3>
                 <button id="btn-close-edit-modal" class="text-2xl hover:text-shu">&times;</button>
             </div>
             <div class="p-6 flex-grow overflow-y-auto">
@@ -333,11 +349,9 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'wafu-school-app';
         // =====================================================================
 
-        // 全域狀態
         let fbUser = null;          
         let currentAppUser = null;  
         let appUsers = [];          
@@ -346,8 +360,8 @@
         let unsubUsers, unsubActivities, unsubRegistrations;
         let quillInstance = null; 
         let editingActivityId = null;
+        let viewingResultsActivityId = null; // 用於追蹤匯出對象
 
-        // UI Elements
         const elLoading = document.getElementById('loading-screen');
         const elAuth = document.getElementById('auth-screen');
         const elApp = document.getElementById('app-screen');
@@ -356,10 +370,9 @@
         const authError = document.getElementById('auth-error');
         const btnSubmitAuth = document.getElementById('btn-submit-auth');
 
-        // 定義系統角色，新增「訪客」身分
         const roleMap = { 'admin': '管理員', 'collaborator': '協作者', 'student': '學生/家長', 'guest': '訪客' };
 
-        // 自訂 Alert/Confirm 邏輯機制
+        // 自訂 Alert/Confirm 邏輯機制 (防網頁卡死)
         function showCustomAlert(message, isConfirm = false) {
             return new Promise((resolve) => {
                 const modal = document.getElementById('modal-alert');
@@ -393,7 +406,6 @@
             });
         }
 
-        // App Initialization
         async function initSystem() {
             try {
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -426,11 +438,9 @@
 
             unsubUsers = onSnapshot(usersRef, async (snapshot) => {
                 appUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                
                 if (appUsers.length === 0 && fbUser) {
                     try { await addDoc(usersRef, { username: 'admin', password: 'admin', role: 'admin', createdAt: Date.now() }); } catch (e) {}
                 }
-                
                 checkAppSession();
                 if(currentAppUser && currentAppUser.role === 'admin') renderUsers();
             });
@@ -453,30 +463,22 @@
             if (unsubRegistrations) unsubRegistrations();
         }
 
-        // 檢查登入狀態：若未登入，預設切換至訪客模式
         function checkAppSession() {
             if(elLoading.style.display !== 'none' && appUsers.length > 0) {
                 elLoading.style.display = 'none';
-                if (!currentAppUser) {
-                    setGuestMode(); // 首次進入網頁直接進入訪客模式
-                } else {
-                    showScreen('app');
-                }
+                if (!currentAppUser) setGuestMode(); 
+                else showScreen('app');
             }
-            
-            // 如果當前已有帳號登入 (非訪客)，驗證其權限是否有被異動
             if (currentAppUser && currentAppUser.role !== 'guest') {
                 const updatedUser = appUsers.find(u => u.id === currentAppUser.id);
-                if (!updatedUser) {
-                    setGuestMode();
-                } else if (updatedUser.role !== currentAppUser.role) {
+                if (!updatedUser) setGuestMode();
+                else if (updatedUser.role !== currentAppUser.role) {
                     currentAppUser = updatedUser;
                     setupAppUI();
                 }
             }
         }
 
-        // 切換至訪客模式邏輯
         function setGuestMode() {
             currentAppUser = { id: 'guest', username: '訪客', role: 'guest' };
             showScreen('app');
@@ -488,17 +490,11 @@
             if (screen === 'app') { elApp.classList.remove('hidden'); setupAppUI(); }
         }
 
-        // 點擊「系統登入」按鈕，顯示登入畫面
-        document.getElementById('btn-nav-login').addEventListener('click', () => {
-            showScreen('auth');
-        });
+        // 登入事件處理
+        document.getElementById('btn-nav-login').addEventListener('click', () => showScreen('auth'));
+        document.getElementById('btn-back-to-app').addEventListener('click', () => showScreen('app'));
+        document.getElementById('btn-logout').addEventListener('click', setGuestMode);
 
-        // 在登入畫面點擊「返回首頁」，退回活動列表
-        document.getElementById('btn-back-to-app').addEventListener('click', () => {
-            showScreen('app');
-        });
-
-        // 執行登入
         btnSubmitAuth.addEventListener('click', () => {
             const username = authUsername.value.trim();
             const password = authPassword.value.trim();
@@ -518,12 +514,6 @@
             }
         });
 
-        // 登出：退回訪客模式
-        document.getElementById('btn-logout').addEventListener('click', handleLogout);
-        function handleLogout() {
-            setGuestMode();
-        }
-
         function setupAppUI() {
             document.getElementById('nav-username').innerText = currentAppUser.username;
             document.getElementById('nav-role').innerText = roleMap[currentAppUser.role];
@@ -532,16 +522,13 @@
             const btnCreateActivity = document.getElementById('btn-create-activity');
             const tabUsers = document.getElementById('tab-users');
 
-            // 判斷是否為訪客，調整導覽列按鈕
             if (currentAppUser.role === 'guest') {
                 document.getElementById('btn-nav-login').classList.remove('hidden');
                 document.getElementById('btn-change-pwd-modal').classList.add('hidden');
                 document.getElementById('btn-logout').classList.add('hidden');
-                
                 adminNav.classList.add('hidden');
                 btnCreateActivity.classList.add('hidden');
             } else {
-                // 已登入狀態
                 document.getElementById('btn-nav-login').classList.add('hidden');
                 document.getElementById('btn-change-pwd-modal').classList.remove('hidden');
                 document.getElementById('btn-logout').classList.remove('hidden');
@@ -579,7 +566,6 @@
             }
         }
 
-        // 活動渲染
         function renderActivities() {
             const container = document.getElementById('activities-container');
             container.innerHTML = '';
@@ -588,12 +574,10 @@
             }
 
             activities.forEach(act => {
-                // 嚴格權限控管：訪客或學生沒有編輯/刪除按鈕
                 const canEdit = currentAppUser.role === 'admin' || (currentAppUser.role === 'collaborator' && act.creatorId === currentAppUser.id);
                 const userReg = registrations.find(r => r.activityId === act.id && r.userId === currentAppUser.id);
                 const regStatus = userReg ? userReg.status : 'none';
                 const totalParticipating = registrations.filter(r => r.activityId === act.id && r.status === 'participating').length;
-
                 const isExpired = act.deadline && new Date(act.deadline + 'T23:59:59') < new Date();
                 const deadlineText = act.deadline ? `填報期限：${act.deadline}` : '無期限';
 
@@ -601,15 +585,16 @@
                 card.className = "bg-white rounded-sm japanese-border card-shadow flex flex-col h-full";
                 
                 let cardHTML = `
-                    <div class="bg-washi border-b border-kin p-5 flex justify-between items-start">
-                        <div>
+                    <div class="bg-washi border-b border-kin p-5 flex flex-wrap justify-between items-start gap-2">
+                        <div class="flex-grow">
                             <h3 class="text-xl md:text-2xl font-black text-sumi leading-snug tracking-wide">${act.title.replace(/</g, "&lt;")}</h3>
                             <p class="text-sm font-bold mt-2 ${isExpired ? 'text-shu' : 'text-matchaDark'}">🗓 ${deadlineText} ${isExpired ? '(已截止)' : ''}</p>
                         </div>
                         ${canEdit ? `
-                        <div class="flex gap-3 shrink-0 ml-4">
-                            <button class="btn-edit text-asagi hover:text-white hover:bg-asagi border border-asagi transition-colors px-2 py-1 rounded-sm font-bold text-sm" data-id="${act.id}">編輯</button>
-                            <button class="btn-delete text-shu hover:text-white hover:bg-shu border border-shu transition-colors px-2 py-1 rounded-sm font-bold text-sm" data-id="${act.id}">刪除</button>
+                        <div class="flex gap-2 shrink-0">
+                            <button class="btn-view-results text-asagi hover:text-white hover:bg-asagi border border-asagi transition-colors px-2 py-1 rounded-sm font-bold text-xs shadow-sm" data-id="${act.id}">📊 檢視結果</button>
+                            <button class="btn-edit text-kin hover:text-white hover:bg-kin border border-kin transition-colors px-2 py-1 rounded-sm font-bold text-xs shadow-sm" data-id="${act.id}">編輯</button>
+                            <button class="btn-delete text-shu hover:text-white hover:bg-shu border border-shu transition-colors px-2 py-1 rounded-sm font-bold text-xs shadow-sm" data-id="${act.id}">刪除</button>
                         </div>` : ''}
                     </div>
                     
@@ -627,14 +612,14 @@
                 if (isExpired) {
                     cardHTML += `<span class="text-gray-500 font-bold text-sm px-3 py-1 bg-gray-200 border border-gray-300 rounded-sm">報名已截止</span>`;
                 } else if (currentAppUser.role === 'guest') {
-                    // 若為訪客，顯示引導登入按鈕
-                    cardHTML += `<button class="btn-goto-login flex-1 sm:flex-none px-4 py-1.5 text-sm font-bold rounded-sm border bg-matcha text-white border-matcha transition-colors">登入以報名</button>`;
+                    // 修復登入以報名的點擊事件 (透過上方事件代理處理)
+                    cardHTML += `<button class="btn-goto-login flex-1 sm:flex-none px-4 py-1.5 text-sm font-bold rounded-sm border bg-matcha text-white border-matcha transition-colors shadow-sm">登入以報名</button>`;
                 } else {
                     cardHTML += `
-                            <button class="btn-reg-yes flex-1 sm:flex-none px-3 py-1.5 text-sm font-bold rounded-sm border ${regStatus === 'participating' ? 'bg-matcha text-white border-matcha' : 'bg-white text-matcha hover:bg-matcha hover:text-white border-matcha'} transition-colors" data-id="${act.id}">
+                            <button class="btn-reg-yes flex-1 sm:flex-none px-3 py-1.5 text-sm font-bold rounded-sm border ${regStatus === 'participating' ? 'bg-matcha text-white border-matcha' : 'bg-white text-matcha hover:bg-matcha hover:text-white border-matcha'} transition-colors shadow-sm" data-id="${act.id}">
                                 ${regStatus === 'participating' ? '✓ 已參加' : '我要參加'}
                             </button>
-                            <button class="btn-reg-no flex-1 sm:flex-none px-3 py-1.5 text-sm font-bold rounded-sm border ${regStatus === 'not_participating' ? 'bg-gray-500 text-white border-gray-500' : 'bg-white text-gray-500 hover:bg-gray-500 hover:text-white border-gray-500'} transition-colors" data-id="${act.id}">
+                            <button class="btn-reg-no flex-1 sm:flex-none px-3 py-1.5 text-sm font-bold rounded-sm border ${regStatus === 'not_participating' ? 'bg-gray-500 text-white border-gray-500' : 'bg-white text-gray-500 hover:bg-gray-500 hover:text-white border-gray-500'} transition-colors shadow-sm" data-id="${act.id}">
                                 ${regStatus === 'not_participating' ? '✗ 已婉拒' : '不參加'}
                             </button>
                     `;
@@ -650,18 +635,20 @@
             });
         }
 
-        // 綁定檢視視窗的關閉邏輯
-        const modalViewActivity = document.getElementById('modal-view-activity');
-        document.getElementById('btn-close-view-modal').addEventListener('click', () => modalViewActivity.classList.add('hidden'));
-        document.getElementById('btn-close-view-bottom').addEventListener('click', () => modalViewActivity.classList.add('hidden'));
-
+        // 活動列表點擊事件處理
         document.getElementById('activities-container').addEventListener('click', async (e) => {
-            const t = e.target;
+            const btn = e.target.closest('button');
+            if (!btn) return;
 
-            // 處理「查看活動說明」按鈕
-            const btnView = t.closest('.btn-view-desc');
-            if (btnView) {
-                const actId = btnView.getAttribute('data-id');
+            // 訪客點擊「登入以報名」
+            if (btn.classList.contains('btn-goto-login')) {
+                showScreen('auth');
+                return;
+            }
+
+            // 開啟活動說明
+            if (btn.classList.contains('btn-view-desc')) {
+                const actId = btn.getAttribute('data-id');
                 const act = activities.find(a => a.id === actId);
                 if (act) {
                     document.getElementById('view-title').innerText = act.title;
@@ -670,26 +657,64 @@
                     document.getElementById('view-deadline').innerText = `🗓 ${deadlineText} ${isExpired ? '(已截止)' : ''}`;
                     document.getElementById('view-deadline').className = `text-sm font-bold tracking-wide ${isExpired ? 'text-shu' : 'text-matchaDark'}`;
                     document.getElementById('view-content').innerHTML = act.description;
-                    modalViewActivity.classList.remove('hidden');
+                    document.getElementById('modal-view-activity').classList.remove('hidden');
                 }
                 return;
             }
 
-            const actId = t.getAttribute('data-id');
+            // 管理員檢視報名結果
+            if (btn.classList.contains('btn-view-results')) {
+                const actId = btn.getAttribute('data-id');
+                viewingResultsActivityId = actId;
+                const act = activities.find(a => a.id === actId);
+                if (act) {
+                    document.getElementById('results-title').innerText = `📊 [${act.title}] 報名結果`;
+                    
+                    const tbody = document.getElementById('results-table-body');
+                    tbody.innerHTML = '';
+                    const actRegs = registrations.filter(r => r.activityId === actId);
+                    
+                    let participatingCount = 0;
+                    actRegs.forEach(r => {
+                        const user = appUsers.find(u => u.id === r.userId);
+                        const username = user ? user.username : '(未知用戶)';
+                        const isPart = r.status === 'participating';
+                        if (isPart) participatingCount++;
+                        
+                        tbody.innerHTML += `
+                            <tr class="border-b border-gray-200">
+                                <td class="p-2">${username.replace(/</g, "&lt;")}</td>
+                                <td class="p-2 font-bold ${isPart ? 'text-matcha' : 'text-gray-500'}">
+                                    ${isPart ? '✓ 已參加' : '✗ 已婉拒'}
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    
+                    if (actRegs.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="2" class="p-4 text-center text-gray-500">尚無人回應</td></tr>`;
+                    }
+                    
+                    document.getElementById('results-stats').innerText = `總回應數：${actRegs.length} | 已參加：${participatingCount}`;
+                    document.getElementById('modal-view-results').classList.remove('hidden');
+                }
+                return;
+            }
+
+            const actId = btn.getAttribute('data-id');
             if (!actId) return;
             
-            // 處理訪客點擊「登入以報名」
-            if (t.classList.contains('btn-goto-login')) {
-                showScreen('auth');
+            // 編輯/刪除/報名邏輯
+            if (btn.classList.contains('btn-edit')) {
+                openActivityModal(actId);
             }
-            else if (t.classList.contains('btn-edit')) openActivityModal(actId);
-            else if (t.classList.contains('btn-delete')) {
-                if (await showCustomAlert("確定要刪除這項活動嗎？", true)) {
+            else if (btn.classList.contains('btn-delete')) {
+                if (await showCustomAlert("確定要刪除這項活動嗎？此動作將連同報名紀錄一併清除。", true)) {
                     await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'activities', actId));
                 }
             }
-            else if (t.classList.contains('btn-reg-yes') || t.classList.contains('btn-reg-no')) {
-                const desired = t.classList.contains('btn-reg-yes') ? 'participating' : 'not_participating';
+            else if (btn.classList.contains('btn-reg-yes') || btn.classList.contains('btn-reg-no')) {
+                const desired = btn.classList.contains('btn-reg-yes') ? 'participating' : 'not_participating';
                 const exReg = registrations.find(r => r.activityId === actId && r.userId === currentAppUser.id);
                 if (exReg) {
                     await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registrations', exReg.id), { status: desired });
@@ -699,6 +724,44 @@
                     });
                 }
             }
+        });
+
+        // 綁定檢視活動說明的關閉邏輯
+        document.getElementById('btn-close-view-modal').addEventListener('click', () => document.getElementById('modal-view-activity').classList.add('hidden'));
+        document.getElementById('btn-close-view-bottom').addEventListener('click', () => document.getElementById('modal-view-activity').classList.add('hidden'));
+
+        // 綁定檢視結果的關閉邏輯
+        document.getElementById('btn-close-results').addEventListener('click', () => document.getElementById('modal-view-results').classList.add('hidden'));
+        document.getElementById('btn-close-results-bottom').addEventListener('click', () => document.getElementById('modal-view-results').classList.add('hidden'));
+
+        // Excel (CSV) 匯出邏輯
+        document.getElementById('btn-export-csv').addEventListener('click', () => {
+            if (!viewingResultsActivityId) return;
+            const act = activities.find(a => a.id === viewingResultsActivityId);
+            if (!act) return;
+
+            const actRegs = registrations.filter(r => r.activityId === viewingResultsActivityId);
+            // 加入 BOM 確保 Excel 開啟時中文不會亂碼
+            let csvContent = "\uFEFF活動名稱,學號/帳號(名稱),意願,回覆時間\n";
+            
+            actRegs.forEach(r => {
+                const user = appUsers.find(u => u.id === r.userId);
+                const username = user ? user.username : '(未知用戶)';
+                const statusStr = r.status === 'participating' ? '已參加' : '已婉拒';
+                // 格式化日期
+                const dateStr = new Date(r.createdAt).toLocaleString('zh-TW');
+                // 將雙引號與逗號處理好
+                csvContent += `"${act.title.replace(/"/g, '""')}","${username.replace(/"/g, '""')}","${statusStr}","${dateStr}"\n`;
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `${act.title}_報名結果.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         });
 
         // 帳號管理 (Admin)
@@ -796,9 +859,7 @@
             }
         });
 
-        // -------------------------------------------------------------
-        // 改用穩定版 Quill JS 初始化編輯器
-        // -------------------------------------------------------------
+        // Quill 編輯器初始化
         function initEditor() {
             if (!quillInstance) {
                 const toolbarOptions = [
@@ -806,11 +867,8 @@
                     ['bold', 'italic', 'underline'],
                     ['link']
                 ];
-                
                 quillInstance = new Quill('#editor-container', {
-                    modules: {
-                        toolbar: toolbarOptions
-                    },
+                    modules: { toolbar: toolbarOptions },
                     theme: 'snow',
                     placeholder: '請在此輸入活動說明...'
                 });
@@ -823,17 +881,15 @@
             editingActivityId = actId;
             modalActivity.classList.remove('hidden');
             if (actId) {
-                document.getElementById('modal-title').innerText = "❁ 修改活動";
+                document.getElementById('modal-edit-title').innerText = "❁ 修改活動";
                 const act = activities.find(a => a.id === actId);
                 document.getElementById('input-activity-title').value = act.title;
                 document.getElementById('input-activity-deadline').value = act.deadline || '';
-                // 將內容放入 Quill
                 quillInstance.root.innerHTML = act.description || '';
             } else {
-                document.getElementById('modal-title').innerText = "❁ 新增活動";
+                document.getElementById('modal-edit-title').innerText = "❁ 新增活動";
                 document.getElementById('input-activity-title').value = '';
                 document.getElementById('input-activity-deadline').value = '';
-                // 清空 Quill
                 quillInstance.root.innerHTML = '';
             }
         }
@@ -845,7 +901,6 @@
         document.getElementById('btn-save-activity').addEventListener('click', async () => {
             const title = document.getElementById('input-activity-title').value.trim();
             const deadline = document.getElementById('input-activity-deadline').value;
-            // 從 Quill 抓取 HTML 內容
             const desc = quillInstance.root.innerHTML;
             
             if (!title) {

@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>班級活動調查系統</title>
     
-    <!-- Google Fonts: Noto Serif TC for Japanese/Traditional Chinese elegant look -->
+    <!-- 引入 Klee One 作為芫荽體的雲端後備字體 (芫荽體基於 Klee One) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&display=swap" rel="stylesheet">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -17,16 +17,16 @@
             theme: {
                 extend: {
                     colors: {
-                        washi: '#f4f0e6',      // 傳統和紙顏色
-                        matcha: '#6b8e23',     // 抹茶綠
-                        matchaDark: '#55711b',
-                        sumi: '#2b2b2b',       // 墨色 (文字)
-                        shu: '#c73e3a',        // 朱紅色 (警告/刪除)
-                        asagi: '#00a3af',      // 淺蔥色 (資訊/按鈕)
-                        kin: '#c4a052',        // 金色 (裝飾)
+                        bgLight: '#fefde8',      // 卡片底色 (溫暖的米黃色)
+                        primary: '#8cb554',      // 主色調 (綠葉色)
+                        primaryDark: '#6e933e',  // 主色調深色
+                        textDark: '#4e341f',     // 文字色 (深咖啡色)
+                        danger: '#d9534f',       // 刪除/警告色
+                        info: '#4a90e2',         // 資訊/連結色
+                        accent: '#d87f28',       // 長頸鹿橘棕色 (邊框與強調)
                     },
                     fontFamily: {
-                        serif: ['"Noto Serif TC"', 'serif'],
+                        sans: ['"Iansui"', '"Klee One"', 'sans-serif'],
                     }
                 }
             }
@@ -38,29 +38,51 @@
     <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
 
     <style>
-        body {
-            background-color: #f4f0e6;
-            background-image: url('data:image/svg+xml;utf8,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h100v100H0z" fill="%23f4f0e6"/><path d="M0 0l50 50L0 100zm100 0L50 50l50 50z" stroke="%23ebdcc2" fill="none" opacity="0.3"/></svg>');
-            color: #2b2b2b;
+        /* 載入芫荽體 */
+        @font-face {
+            font-family: 'Iansui';
+            src: local('Iansui'), url('https://cdn.jsdelivr.net/gh/max32002/iansui@master/Iansui-Regular.ttf') format('truetype');
+            font-display: swap;
         }
-        .japanese-border { border: 2px solid #c4a052; padding: 4px; background-clip: content-box; }
-        .card-shadow { box-shadow: 4px 4px 0px 0px rgba(196, 160, 82, 0.2); }
+
+        body {
+            background-color: #e5f396; /* 呼應圖片天空的淺草綠色 */
+            /* 底部大草原丘陵背景 */
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="%23c4e062" fill-opacity="1" d="M0,224L80,213.3C160,203,320,181,480,181.3C640,181,800,203,960,218.7C1120,235,1280,245,1360,250.7L1440,256L1440,320L1360,320C1280,320,1120,320,960,320C800,320,640,320,480,320C320,320,160,320,80,320L0,320Z"></path></svg>');
+            background-repeat: no-repeat;
+            background-position: bottom;
+            background-attachment: fixed;
+            background-size: cover;
+            color: #4e341f;
+        }
+        
+        /* 活潑的圓角邊框設計 */
+        .theme-border { 
+            border: 3px solid #d87f28; 
+            padding: 4px; 
+            background-clip: content-box; 
+            border-radius: 16px;
+        }
+        
+        /* 卡片陰影改為活潑的橘棕色偏移 */
+        .card-shadow { box-shadow: 4px 4px 0px 0px rgba(216, 127, 40, 0.25); }
+        
         .hidden { display: none !important; }
-        .modal-overlay { background-color: rgba(43, 43, 43, 0.8); }
+        .modal-overlay { background-color: rgba(78, 52, 31, 0.6); backdrop-filter: blur(2px); }
         
         /* 自訂 Quill 編輯器樣式 */
         .ql-toolbar.ql-snow {
-            border: 2px dashed #c4a052 !important;
+            border: 2px dashed #d87f28 !important;
             border-bottom: none !important;
-            border-radius: 4px 4px 0 0;
+            border-radius: 12px 12px 0 0;
             background-color: rgba(255, 255, 255, 0.5) !important;
-            font-family: 'Noto Serif TC', serif;
+            font-family: 'Iansui', 'Klee One', sans-serif;
         }
         .ql-container.ql-snow {
-            border: 2px dashed #c4a052 !important;
-            border-radius: 0 0 4px 4px;
+            border: 2px dashed #d87f28 !important;
+            border-radius: 0 0 12px 12px;
             background-color: transparent !important;
-            font-family: 'Noto Serif TC', serif;
+            font-family: 'Iansui', 'Klee One', sans-serif;
             font-size: 16px;
             height: 250px;
         }
@@ -68,45 +90,47 @@
         /* 檢視模式的 Quill 樣式 */
         .ql-editor { white-space: pre-wrap; }
         .activity-desc table { border-collapse: collapse; width: 100%; }
-        .activity-desc table th, .activity-desc table td { border: 1px solid #c4a052; padding: 8px; }
+        .activity-desc table th, .activity-desc table td { border: 1px solid #d87f28; padding: 8px; }
         
         /* 標題圖示 */
         .title-icon { font-size: 1.2em; line-height: 1; margin-right: 4px; }
     </style>
 </head>
-<body class="font-serif min-h-screen flex flex-col">
+<body class="font-sans min-h-screen flex flex-col">
 
     <!-- 全域載入提示 -->
-    <div id="loading-screen" class="fixed inset-0 flex items-center justify-center bg-washi z-50">
+    <div id="loading-screen" class="fixed inset-0 flex items-center justify-center bg-bgLight z-50">
         <div class="text-center">
-            <div class="text-4xl text-matcha mb-4 animate-pulse">✿</div>
-            <h2 class="text-xl font-bold text-sumi">系統連線中...</h2>
+            <div class="text-5xl mb-4 animate-bounce">🦒</div>
+            <h2 class="text-xl font-bold text-textDark">系統連線中...</h2>
         </div>
     </div>
 
     <!-- 登入畫面 -->
     <div id="auth-screen" class="hidden flex-grow flex items-center justify-center p-4">
-        <div class="bg-white p-8 rounded-sm japanese-border card-shadow max-w-md w-full relative mt-8">
-            <div id="auth-site-title" class="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-washi px-4 py-1 border-2 border-kin text-kin font-bold rounded-full whitespace-nowrap">
+        <div class="bg-white p-8 rounded-xl theme-border card-shadow max-w-md w-full relative mt-8">
+            <div id="auth-site-title" class="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-bgLight px-5 py-2 border-2 border-accent text-accent font-bold rounded-full whitespace-nowrap shadow-sm">
                 班級活動調查系統
             </div>
-            <h2 class="text-3xl font-bold text-center mb-6 mt-4 text-sumi border-b-2 border-matcha pb-2">系統登入</h2>
+            <h2 class="text-3xl font-bold text-center mb-6 mt-4 text-textDark border-b-2 border-primary pb-2 flex justify-center items-center gap-2">
+                <span class="text-4xl">🦒</span> 系統登入
+            </h2>
             
             <div class="mb-4">
-                <label class="block text-sm font-bold mb-2">帳號 (學號/管理員帳號)</label>
-                <input type="text" id="auth-username" class="w-full p-2 border border-kin focus:outline-none focus:ring-2 focus:ring-matcha bg-washi rounded-sm" placeholder="請輸入帳號">
+                <label class="block text-sm font-bold mb-2 text-textDark">帳號 (學號/管理員帳號)</label>
+                <input type="text" id="auth-username" class="w-full p-3 border-2 border-accent focus:outline-none focus:ring-4 focus:ring-primary/40 bg-bgLight rounded-xl transition-all" placeholder="請輸入帳號">
             </div>
             <div class="mb-6">
-                <label class="block text-sm font-bold mb-2">密碼</label>
-                <input type="password" id="auth-password" class="w-full p-2 border border-kin focus:outline-none focus:ring-2 focus:ring-matcha bg-washi rounded-sm" placeholder="請輸入密碼">
+                <label class="block text-sm font-bold mb-2 text-textDark">密碼</label>
+                <input type="password" id="auth-password" class="w-full p-3 border-2 border-accent focus:outline-none focus:ring-4 focus:ring-primary/40 bg-bgLight rounded-xl transition-all" placeholder="請輸入密碼">
             </div>
             
-            <p id="auth-error" class="text-shu text-sm mb-4 hidden text-center font-bold"></p>
+            <p id="auth-error" class="text-danger text-sm mb-4 hidden text-center font-bold"></p>
             
-            <button id="btn-submit-auth" class="w-full bg-matcha hover:bg-matchaDark text-white font-bold py-2 px-4 rounded-sm transition-colors mb-4 border border-matchaDark shadow-sm">
+            <button id="btn-submit-auth" class="w-full bg-primary hover:bg-primaryDark text-white font-bold py-3 px-4 rounded-xl transition-colors mb-4 border-b-4 border-primaryDark shadow-sm text-lg">
                 登入
             </button>
-            <button id="btn-back-to-app" class="w-full bg-washi hover:bg-kin hover:text-white text-sumi font-bold py-2 px-4 rounded-sm transition-colors mb-4 border border-kin shadow-sm">
+            <button id="btn-back-to-app" class="w-full bg-bgLight hover:bg-accent hover:text-white text-textDark font-bold py-3 px-4 rounded-xl transition-colors mb-4 border-2 border-accent shadow-sm">
                 返回活動列表 (訪客瀏覽)
             </button>
         </div>
@@ -115,31 +139,31 @@
     <!-- 應用程式主畫面 -->
     <div id="app-screen" class="hidden flex-grow flex flex-col">
         <!-- 導覽列 -->
-        <header class="bg-white border-b-4 border-matcha shadow-sm sticky top-0 z-30">
+        <header class="bg-white border-b-4 border-primary shadow-sm sticky top-0 z-30">
             <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
                 <div class="flex items-center gap-2">
-                    <span class="text-2xl md:text-3xl text-matcha hidden sm:inline">✿</span>
-                    <h1 class="text-lg md:text-xl font-black tracking-widest text-sumi flex items-center gap-2">
+                    <span class="text-3xl hidden sm:inline">🦒</span>
+                    <h1 class="text-lg md:text-xl font-black tracking-widest text-textDark flex items-center gap-2">
                         <span id="nav-site-title">班級活動調查系統</span>
                         <!-- 管理者修改標題的按鈕 -->
-                        <button id="btn-edit-site-title" class="hidden text-sm text-kin hover:text-matcha transition-colors" title="修改系統標題">
-                            ✏️
+                        <button id="btn-edit-site-title" class="hidden text-sm text-accent hover:text-primary transition-colors bg-bgLight px-2 py-1 rounded-lg border border-accent shadow-sm" title="修改系統標題">
+                            ✏️ 編輯
                         </button>
                     </h1>
                 </div>
                 <div class="flex items-center gap-2 md:gap-4 shrink-0">
                     <div class="text-right hidden sm:block">
-                        <div class="text-sm font-bold text-sumi" id="nav-username">使用者</div>
-                        <div class="text-xs text-asagi" id="nav-role">角色</div>
+                        <div class="text-sm font-bold text-textDark" id="nav-username">使用者</div>
+                        <div class="text-xs text-info" id="nav-role">角色</div>
                     </div>
                     <!-- 訪客登入 / 修改密碼與登出 -->
-                    <button id="btn-nav-login" class="bg-matcha hover:bg-matchaDark text-white px-3 md:px-4 py-1.5 rounded-sm text-xs md:text-sm transition-colors font-bold shadow-sm hidden">
+                    <button id="btn-nav-login" class="bg-primary hover:bg-primaryDark text-white px-4 md:px-5 py-2 rounded-xl text-xs md:text-sm transition-colors font-bold shadow-sm hidden border-b-2 border-primaryDark">
                         系統登入
                     </button>
-                    <button id="btn-change-pwd-modal" class="bg-washi border border-kin text-sumi hover:bg-kin hover:text-white px-2 md:px-3 py-1 rounded-sm text-xs md:text-sm transition-colors font-bold">
+                    <button id="btn-change-pwd-modal" class="bg-bgLight border-2 border-accent text-textDark hover:bg-accent hover:text-white px-3 md:px-4 py-1.5 rounded-xl text-xs md:text-sm transition-colors font-bold">
                         改密碼
                     </button>
-                    <button id="btn-logout" class="bg-washi border border-kin text-sumi hover:bg-kin hover:text-white px-2 md:px-3 py-1 rounded-sm text-xs md:text-sm transition-colors font-bold">
+                    <button id="btn-logout" class="bg-bgLight border-2 border-accent text-textDark hover:bg-accent hover:text-white px-3 md:px-4 py-1.5 rounded-xl text-xs md:text-sm transition-colors font-bold">
                         登出
                     </button>
                 </div>
@@ -147,77 +171,76 @@
         </header>
 
         <!-- 選單列 (針對管理者和協作者) -->
-        <nav id="admin-nav" class="bg-washi border-b border-kin hidden">
+        <nav id="admin-nav" class="bg-bgLight border-b-2 border-accent hidden">
             <div class="max-w-6xl mx-auto px-4 flex gap-4 overflow-x-auto">
-                <button id="tab-activities" class="py-2 px-4 border-b-2 border-matcha text-matcha font-bold whitespace-nowrap">調查列表</button>
-                <button id="tab-users" class="py-2 px-4 border-b-2 border-transparent text-gray-500 hover:text-matcha font-bold hidden whitespace-nowrap">用戶管理 (管理員)</button>
+                <button id="tab-activities" class="py-3 px-4 border-b-4 border-primary text-primary font-bold whitespace-nowrap text-lg">調查列表</button>
+                <button id="tab-users" class="py-3 px-4 border-b-4 border-transparent text-gray-500 hover:text-primary font-bold hidden whitespace-nowrap text-lg transition-colors">用戶管理 (管理員)</button>
             </div>
         </nav>
 
         <main class="max-w-6xl mx-auto px-4 py-8 w-full flex-grow">
             <!-- 活動列表區塊 -->
             <section id="view-activities">
-                <!-- 移除了舊版的大標題，只保留新增按鈕 (靠右對齊) -->
                 <div class="flex justify-end mb-4 pb-2">
-                    <button id="btn-create-activity" class="hidden bg-matcha hover:bg-matchaDark text-white px-4 py-2 rounded-sm font-bold shadow-sm flex items-center gap-1 text-sm md:text-base transition-colors">
+                    <button id="btn-create-activity" class="hidden bg-primary hover:bg-primaryDark text-white px-5 py-2.5 rounded-xl font-bold shadow-sm flex items-center gap-1 text-sm md:text-base transition-colors border-b-4 border-primaryDark">
                         <span>＋</span> 新增調查活動
                     </button>
                 </div>
                 <!-- 容器改為單欄的 flex-col，呈現條列式 -->
-                <div id="activities-container" class="flex flex-col gap-3"></div>
+                <div id="activities-container" class="flex flex-col gap-4"></div>
             </section>
 
             <!-- 用戶管理區塊 -->
             <section id="view-users" class="hidden">
-                <div class="mb-6 border-b-[3px] border-kin pb-3">
-                    <h2 class="text-2xl md:text-4xl font-black text-sumi tracking-wider flex items-center">
-                        <span class="title-icon text-sumi">✿</span> 用戶帳號管理
+                <div class="mb-6 border-b-[3px] border-accent pb-3">
+                    <h2 class="text-2xl md:text-4xl font-black text-textDark tracking-wider flex items-center">
+                        <span class="title-icon">🦒</span> 用戶帳號管理
                     </h2>
                 </div>
                 
                 <!-- 新增帳號 -->
-                <div class="bg-white rounded-sm japanese-border shadow-sm p-4 mb-6">
-                    <h3 class="text-lg font-bold text-sumi mb-4 border-b border-gray-200 pb-2">新增使用者 (學生/家長)</h3>
+                <div class="bg-white rounded-xl theme-border shadow-sm p-6 mb-6">
+                    <h3 class="text-lg font-bold text-textDark mb-4 border-b-2 border-gray-100 pb-2">新增使用者 (學生/家長)</h3>
                     <div class="flex flex-wrap gap-4 items-end mb-6">
                         <div>
-                            <label class="block text-sm font-bold mb-1">帳號</label>
-                            <input type="text" id="input-new-username" class="p-2 border border-kin rounded-sm w-32 md:w-48 bg-washi">
+                            <label class="block text-sm font-bold mb-1 text-textDark">帳號</label>
+                            <input type="text" id="input-new-username" class="p-2 border-2 border-accent rounded-xl w-32 md:w-48 bg-bgLight focus:outline-none focus:ring-2 focus:ring-primary/50">
                         </div>
                         <div>
-                            <label class="block text-sm font-bold mb-1">預設密碼</label>
-                            <input type="text" id="input-new-password" class="p-2 border border-kin rounded-sm w-32 md:w-48 bg-washi">
+                            <label class="block text-sm font-bold mb-1 text-textDark">預設密碼</label>
+                            <input type="text" id="input-new-password" class="p-2 border-2 border-accent rounded-xl w-32 md:w-48 bg-bgLight focus:outline-none focus:ring-2 focus:ring-primary/50">
                         </div>
                         <div>
-                            <label class="block text-sm font-bold mb-1">角色</label>
-                            <select id="select-new-role" class="p-2 border border-kin rounded-sm bg-washi">
+                            <label class="block text-sm font-bold mb-1 text-textDark">角色</label>
+                            <select id="select-new-role" class="p-2 border-2 border-accent rounded-xl bg-bgLight focus:outline-none focus:ring-2 focus:ring-primary/50">
                                 <option value="student">學生/家長</option>
                                 <option value="collaborator">協作者</option>
                                 <option value="admin">管理員</option>
                             </select>
                         </div>
-                        <button id="btn-add-user" class="bg-matcha text-white px-4 py-2 rounded-sm font-bold">新增單筆</button>
+                        <button id="btn-add-user" class="bg-primary text-white px-5 py-2.5 rounded-xl font-bold border-b-4 border-primaryDark active:border-b-0 active:translate-y-1 transition-all">新增單筆</button>
                         <span id="add-user-msg" class="text-sm font-bold ml-2"></span>
                     </div>
 
                     <!-- 大量匯入 -->
-                    <div class="border-t border-gray-200 pt-4">
-                        <h4 class="text-md font-bold text-sumi mb-2">批次大量匯入</h4>
+                    <div class="border-t-2 border-gray-100 pt-6 mt-2">
+                        <h4 class="text-md font-bold text-textDark mb-2">批次大量匯入</h4>
                         <p class="text-xs text-gray-500 mb-2">請輸入 CSV 格式：<code>帳號,密碼,角色</code></p>
-                        <textarea id="input-bulk-users" class="w-full p-2 border border-kin rounded-sm mb-2 h-24 bg-washi" placeholder="stu01,pwd123,student"></textarea>
-                        <button id="btn-bulk-import" class="bg-asagi text-white px-4 py-2 rounded-sm font-bold">批次匯入</button>
+                        <textarea id="input-bulk-users" class="w-full p-3 border-2 border-accent rounded-xl mb-3 h-24 bg-bgLight focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="stu01,pwd123,student"></textarea>
+                        <button id="btn-bulk-import" class="bg-info text-white px-5 py-2.5 rounded-xl font-bold border-b-4 border-blue-600 active:border-b-0 active:translate-y-1 transition-all">批次匯入</button>
                         <span id="bulk-import-msg" class="text-sm font-bold ml-2"></span>
                     </div>
                 </div>
 
                 <!-- 帳號列表 -->
-                <div class="bg-white rounded-sm japanese-border shadow-sm overflow-x-auto">
+                <div class="bg-white rounded-xl theme-border shadow-sm overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
-                            <tr class="bg-washi border-b border-kin">
-                                <th class="p-3 font-bold">帳號 (名稱)</th>
-                                <th class="p-3 font-bold">目前角色</th>
-                                <th class="p-3 font-bold">變更權限</th>
-                                <th class="p-3 font-bold">操作</th>
+                            <tr class="bg-bgLight border-b-2 border-accent">
+                                <th class="p-4 font-bold text-textDark">帳號 (名稱)</th>
+                                <th class="p-4 font-bold text-textDark">目前角色</th>
+                                <th class="p-4 font-bold text-textDark">變更權限</th>
+                                <th class="p-4 font-bold text-textDark">操作</th>
                             </tr>
                         </thead>
                         <tbody id="users-table-body"></tbody>
@@ -229,133 +252,133 @@
 
     <!-- 修改系統標題 Modal -->
     <div id="modal-edit-site-title" class="hidden fixed inset-0 modal-overlay z-[60] flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-sm flex flex-col rounded-sm japanese-border">
-            <div class="p-4 border-b border-kin flex justify-between items-center bg-washi">
-                <h3 class="text-lg font-bold text-sumi">修改系統標題</h3>
-                <button id="btn-close-site-title-modal" class="text-xl hover:text-shu">&times;</button>
+        <div class="bg-white w-full max-w-sm flex flex-col rounded-xl theme-border shadow-2xl">
+            <div class="p-4 border-b-2 border-accent flex justify-between items-center bg-bgLight rounded-t-lg">
+                <h3 class="text-lg font-bold text-textDark">修改系統標題</h3>
+                <button id="btn-close-site-title-modal" class="text-2xl hover:text-danger font-bold">&times;</button>
             </div>
             <div class="p-6">
-                <div class="mb-4">
-                    <label class="block text-sm font-bold mb-2">新標題名稱</label>
-                    <input type="text" id="input-site-title" class="w-full p-2 border border-kin rounded-sm bg-washi focus:outline-none focus:border-matcha" placeholder="例如：班級活動調查系統">
+                <div class="mb-5">
+                    <label class="block text-sm font-bold mb-2 text-textDark">新標題名稱</label>
+                    <input type="text" id="input-site-title" class="w-full p-3 border-2 border-accent rounded-xl bg-white focus:outline-none focus:ring-4 focus:ring-primary/40" placeholder="例如：班級活動調查系統">
                 </div>
-                <button id="btn-save-site-title" class="w-full py-2 bg-matcha hover:bg-matchaDark transition-colors text-white rounded-sm font-bold">確認修改</button>
+                <button id="btn-save-site-title" class="w-full py-3 bg-primary hover:bg-primaryDark transition-colors text-white rounded-xl font-bold border-b-4 border-primaryDark">確認修改</button>
             </div>
         </div>
     </div>
 
-    <!-- 檢視活動說明 Modal (點擊開啟新視窗) -->
+    <!-- 檢視活動說明 Modal -->
     <div id="modal-view-activity" class="hidden fixed inset-0 modal-overlay z-[50] flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-4xl max-h-[90vh] flex flex-col rounded-sm japanese-border shadow-2xl">
-            <div class="p-4 border-b border-kin flex justify-between items-center bg-washi">
-                <h3 id="view-title" class="text-xl md:text-2xl font-black text-sumi leading-snug"></h3>
-                <button id="btn-close-view-modal" class="text-2xl hover:text-shu transition-colors">&times;</button>
+        <div class="bg-white w-full max-w-4xl max-h-[90vh] flex flex-col rounded-xl theme-border shadow-2xl">
+            <div class="p-5 border-b-2 border-accent flex justify-between items-center bg-bgLight rounded-t-lg">
+                <h3 id="view-title" class="text-xl md:text-2xl font-black text-textDark leading-snug flex items-center gap-2"></h3>
+                <button id="btn-close-view-modal" class="text-3xl hover:text-danger font-bold">&times;</button>
             </div>
-            <div class="p-2 bg-gray-50 border-b border-kin px-6">
+            <div class="p-3 bg-white border-b-2 border-dashed border-gray-200 px-6">
                 <span id="view-deadline" class="text-sm font-bold tracking-wide"></span>
             </div>
             <div class="p-6 flex-grow overflow-y-auto activity-desc ql-editor bg-white" id="view-content"></div>
-            <div class="p-4 border-t border-kin flex justify-end bg-washi">
-                <button id="btn-close-view-bottom" class="px-6 py-2 border-2 border-sumi text-sumi hover:bg-kin hover:text-white hover:border-kin transition-colors rounded-sm font-bold">關閉</button>
+            <div class="p-5 border-t-2 border-accent flex justify-end bg-bgLight rounded-b-lg">
+                <button id="btn-close-view-bottom" class="px-6 py-2.5 border-2 border-textDark text-textDark hover:bg-accent hover:text-white hover:border-accent transition-colors rounded-xl font-bold bg-white">關閉</button>
             </div>
         </div>
     </div>
 
     <!-- 管理員檢視報名結果 Modal -->
     <div id="modal-view-results" class="hidden fixed inset-0 modal-overlay z-[50] flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-2xl max-h-[90vh] flex flex-col rounded-sm japanese-border shadow-2xl">
-            <div class="p-4 border-b border-kin flex justify-between items-center bg-washi">
-                <h3 id="results-title" class="text-lg md:text-xl font-bold text-sumi leading-snug"></h3>
-                <button id="btn-close-results" class="text-2xl hover:text-shu transition-colors">&times;</button>
+        <div class="bg-white w-full max-w-2xl max-h-[90vh] flex flex-col rounded-xl theme-border shadow-2xl">
+            <div class="p-5 border-b-2 border-accent flex justify-between items-center bg-bgLight rounded-t-lg">
+                <h3 id="results-title" class="text-lg md:text-xl font-bold text-textDark leading-snug"></h3>
+                <button id="btn-close-results" class="text-3xl hover:text-danger font-bold">&times;</button>
             </div>
-            <div class="p-4 bg-white flex justify-between items-center border-b border-gray-200">
-                <div class="text-sm font-bold text-sumi" id="results-stats"></div>
-                <button id="btn-export-csv" class="bg-asagi hover:bg-blue-600 text-white px-3 py-1.5 rounded-sm font-bold text-sm shadow-sm transition-colors">匯出 Excel (CSV)</button>
+            <div class="p-4 bg-white flex justify-between items-center border-b-2 border-dashed border-gray-200">
+                <div class="text-sm font-bold text-textDark bg-bgLight px-3 py-1.5 rounded-lg border border-accent" id="results-stats"></div>
+                <button id="btn-export-csv" class="bg-info hover:bg-blue-600 text-white px-4 py-2 rounded-xl font-bold text-sm border-b-4 border-blue-700 active:border-b-0 active:translate-y-1 transition-all">匯出 Excel</button>
             </div>
-            <div class="p-4 flex-grow overflow-y-auto bg-gray-50">
-                <table class="w-full text-left border-collapse bg-white shadow-sm text-sm">
+            <div class="p-0 flex-grow overflow-y-auto bg-gray-50">
+                <table class="w-full text-left border-collapse bg-white text-sm">
                     <thead>
-                        <tr class="bg-washi border-b border-kin">
-                            <th class="p-2 font-bold w-1/2">帳號 (名稱)</th>
-                            <th class="p-2 font-bold w-1/2">報名狀態</th>
+                        <tr class="bg-bgLight border-b-2 border-accent">
+                            <th class="p-4 font-bold text-textDark w-1/2">帳號 (名稱)</th>
+                            <th class="p-4 font-bold text-textDark w-1/2">報名狀態</th>
                         </tr>
                     </thead>
                     <tbody id="results-table-body"></tbody>
                 </table>
             </div>
-            <div class="p-4 border-t border-kin flex justify-end bg-washi">
-                <button id="btn-close-results-bottom" class="px-4 py-2 border border-sumi text-sumi hover:bg-gray-100 transition-colors rounded-sm font-bold">關閉</button>
+            <div class="p-5 border-t-2 border-accent flex justify-end bg-bgLight rounded-b-lg">
+                <button id="btn-close-results-bottom" class="px-6 py-2.5 border-2 border-textDark text-textDark hover:bg-gray-100 transition-colors rounded-xl font-bold bg-white">關閉</button>
             </div>
         </div>
     </div>
 
-    <!-- 活動編輯 Modal (管理員/協作者專用) -->
+    <!-- 活動編輯 Modal -->
     <div id="modal-activity" class="hidden fixed inset-0 modal-overlay z-[50] flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-4xl max-h-[90vh] flex flex-col rounded-sm japanese-border">
-            <div class="p-4 border-b border-kin flex justify-between items-center bg-washi">
-                <h3 id="modal-edit-title" class="text-xl font-bold text-sumi">新增/編輯活動</h3>
-                <button id="btn-close-edit-modal" class="text-2xl hover:text-shu">&times;</button>
+        <div class="bg-white w-full max-w-4xl max-h-[90vh] flex flex-col rounded-xl theme-border shadow-2xl">
+            <div class="p-5 border-b-2 border-accent flex justify-between items-center bg-bgLight rounded-t-lg">
+                <h3 id="modal-edit-title" class="text-xl font-bold text-textDark flex items-center gap-2">新增/編輯活動</h3>
+                <button id="btn-close-edit-modal" class="text-3xl hover:text-danger font-bold">&times;</button>
             </div>
             <div class="p-6 flex-grow overflow-y-auto">
-                <div class="mb-4">
-                    <label class="block text-sm font-bold mb-2 text-sumi">活動名稱 (標題)</label>
-                    <input type="text" id="input-activity-title" class="w-full p-2 border border-kin rounded-sm focus:outline-none focus:border-matcha" placeholder="輸入標題">
+                <div class="mb-5">
+                    <label class="block text-sm font-bold mb-2 text-textDark">活動名稱 (標題)</label>
+                    <input type="text" id="input-activity-title" class="w-full p-3 border-2 border-accent rounded-xl bg-bgLight focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/40 transition-all" placeholder="輸入標題">
                 </div>
-                <div class="mb-4">
-                    <label class="block text-sm font-bold mb-2 text-sumi">填報期限</label>
-                    <input type="date" id="input-activity-deadline" class="w-full p-2 border border-kin rounded-sm bg-washi focus:outline-none focus:border-matcha">
+                <div class="mb-5">
+                    <label class="block text-sm font-bold mb-2 text-textDark">填報期限</label>
+                    <input type="date" id="input-activity-deadline" class="w-full p-3 border-2 border-accent rounded-xl bg-bgLight focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/40 transition-all">
                 </div>
-                <div class="mb-4">
-                    <label class="block text-sm font-bold mb-2 text-sumi">活動說明 (支援多行與格式)</label>
-                    <div id="editor-container"></div>
+                <div class="mb-5">
+                    <label class="block text-sm font-bold mb-2 text-textDark">活動說明 (支援多行與格式)</label>
+                    <div id="editor-container" class="bg-white"></div>
                 </div>
                 
                 <!-- 新增附件區塊 -->
-                <div class="mb-2 border-t border-kin pt-4 mt-4">
-                    <div class="flex justify-between items-center mb-3">
-                        <label class="block text-sm font-bold text-sumi flex items-center gap-1">📎 附件連結 (雲端硬碟或圖片網址)</label>
-                        <button type="button" id="btn-add-attachment" class="text-asagi hover:text-white hover:bg-asagi border border-asagi px-2 py-1 rounded-sm text-xs transition-colors font-bold">+ 新增附件</button>
+                <div class="mb-2 border-t-2 border-dashed border-gray-200 pt-5 mt-5 bg-gray-50 -mx-6 px-6 pb-4">
+                    <div class="flex justify-between items-center mb-4">
+                        <label class="block text-sm font-bold text-textDark flex items-center gap-2">📎 附件連結 (雲端硬碟或圖片網址)</label>
+                        <button type="button" id="btn-add-attachment" class="text-info bg-white hover:bg-info hover:text-white border-2 border-info px-3 py-1.5 rounded-lg text-xs transition-colors font-bold shadow-sm">+ 新增附件</button>
                     </div>
-                    <div id="attachments-edit-container" class="flex flex-col gap-2"></div>
+                    <div id="attachments-edit-container" class="flex flex-col gap-3"></div>
                 </div>
             </div>
-            <div class="p-4 border-t border-kin flex justify-end gap-3 bg-washi">
-                <button id="btn-cancel-edit-modal" class="px-4 py-2 border border-sumi text-sumi hover:bg-gray-100 rounded-sm font-bold transition-colors">取消</button>
-                <button id="btn-save-activity" class="px-6 py-2 bg-matcha hover:bg-matchaDark text-white rounded-sm font-bold transition-colors">儲存</button>
+            <div class="p-5 border-t-2 border-accent flex justify-end gap-3 bg-bgLight rounded-b-lg">
+                <button id="btn-cancel-edit-modal" class="px-5 py-2.5 border-2 border-textDark text-textDark hover:bg-white rounded-xl font-bold transition-colors bg-transparent">取消</button>
+                <button id="btn-save-activity" class="px-8 py-2.5 bg-primary hover:bg-primaryDark text-white rounded-xl font-bold transition-colors border-b-4 border-primaryDark">儲存</button>
             </div>
         </div>
     </div>
 
     <!-- 修改密碼 Modal -->
     <div id="modal-pwd" class="hidden fixed inset-0 modal-overlay z-[60] flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-sm flex flex-col rounded-sm japanese-border">
-            <div class="p-4 border-b border-kin flex justify-between items-center bg-washi">
-                <h3 class="text-lg font-bold text-sumi">修改密碼</h3>
-                <button id="btn-close-pwd-modal" class="text-xl hover:text-shu">&times;</button>
+        <div class="bg-white w-full max-w-sm flex flex-col rounded-xl theme-border shadow-2xl">
+            <div class="p-5 border-b-2 border-accent flex justify-between items-center bg-bgLight rounded-t-lg">
+                <h3 class="text-lg font-bold text-textDark">修改密碼</h3>
+                <button id="btn-close-pwd-modal" class="text-3xl hover:text-danger font-bold">&times;</button>
             </div>
             <div class="p-6">
-                <div class="mb-4">
-                    <label class="block text-sm font-bold mb-2">新密碼</label>
-                    <input type="password" id="input-new-pwd" class="w-full p-2 border border-kin rounded-sm bg-washi focus:outline-none focus:border-matcha" placeholder="輸入新密碼">
+                <div class="mb-5">
+                    <label class="block text-sm font-bold mb-2 text-textDark">新密碼</label>
+                    <input type="password" id="input-new-pwd" class="w-full p-3 border-2 border-accent rounded-xl bg-bgLight focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/40 transition-all" placeholder="輸入新密碼">
                 </div>
                 <p id="pwd-msg" class="text-sm font-bold mb-4 text-center"></p>
-                <button id="btn-save-pwd" class="w-full py-2 bg-matcha hover:bg-matchaDark transition-colors text-white rounded-sm font-bold">確認修改</button>
+                <button id="btn-save-pwd" class="w-full py-3 bg-primary hover:bg-primaryDark transition-colors text-white rounded-xl font-bold border-b-4 border-primaryDark">確認修改</button>
             </div>
         </div>
     </div>
 
     <!-- 系統自訂 Alert/Confirm Modal -->
     <div id="modal-alert" class="hidden fixed inset-0 modal-overlay z-[70] flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-sm rounded-sm japanese-border shadow-lg">
-            <div class="p-4 border-b border-kin bg-washi">
-                <h3 id="modal-alert-title" class="text-lg font-bold text-sumi">提示</h3>
+        <div class="bg-white w-full max-w-sm rounded-xl theme-border shadow-2xl">
+            <div class="p-4 border-b-2 border-accent bg-bgLight rounded-t-lg">
+                <h3 id="modal-alert-title" class="text-lg font-bold text-textDark flex items-center gap-2">提示</h3>
             </div>
-            <div class="p-6">
-                <p id="modal-alert-message" class="text-sumi font-bold whitespace-pre-wrap"></p>
+            <div class="p-6 bg-white">
+                <p id="modal-alert-message" class="text-textDark font-bold whitespace-pre-wrap text-center"></p>
             </div>
-            <div class="p-4 border-t border-kin bg-washi flex justify-end gap-3">
-                <button id="btn-alert-cancel" class="hidden px-4 py-2 border border-sumi text-sumi hover:bg-gray-100 rounded-sm font-bold">取消</button>
-                <button id="btn-alert-confirm" class="px-4 py-2 bg-matcha text-white hover:bg-matchaDark rounded-sm font-bold">確定</button>
+            <div class="p-4 border-t-2 border-accent bg-bgLight flex justify-center gap-4 rounded-b-lg">
+                <button id="btn-alert-cancel" class="hidden px-6 py-2 border-2 border-textDark text-textDark hover:bg-white rounded-xl font-bold bg-transparent">取消</button>
+                <button id="btn-alert-confirm" class="px-8 py-2 bg-primary text-white hover:bg-primaryDark rounded-xl font-bold border-b-4 border-primaryDark">確定</button>
             </div>
         </div>
     </div>
@@ -387,7 +410,7 @@
         let appUsers = [];          
         let activities = [];        
         let registrations = [];
-        let siteSettings = { siteTitle: '班級活動調查系統' }; // 全局設定
+        let siteSettings = { siteTitle: '班級活動調查系統' }; 
         
         let unsubUsers, unsubActivities, unsubRegistrations, unsubSettings;
         let quillInstance = null; 
@@ -397,11 +420,11 @@
         // 附件相關邏輯
         function createAttachmentRow(name = '', url = '') {
             const row = document.createElement('div');
-            row.className = 'flex gap-2 items-center';
+            row.className = 'flex gap-2 items-center bg-white p-2 rounded-xl border border-gray-200 shadow-sm';
             row.innerHTML = `
-                <input type="text" class="attach-name w-1/3 p-2 border border-kin rounded-sm text-sm focus:outline-none focus:border-matcha" placeholder="附件名稱 (如: 簡章)" value="${name}">
-                <input type="url" class="attach-url w-2/3 p-2 border border-kin rounded-sm text-sm focus:outline-none focus:border-matcha" placeholder="貼上網址 (https://...)" value="${url}">
-                <button type="button" class="btn-remove-attach text-shu hover:text-red-700 font-bold px-2 text-lg">&times;</button>
+                <input type="text" class="attach-name w-1/3 p-2 border-2 border-accent rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" placeholder="附件名稱 (如: 簡章)" value="${name}">
+                <input type="url" class="attach-url w-2/3 p-2 border-2 border-accent rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/40" placeholder="貼上網址 (https://...)" value="${url}">
+                <button type="button" class="btn-remove-attach text-danger hover:bg-danger hover:text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-lg transition-colors">&times;</button>
             `;
             return row;
         }
@@ -426,7 +449,7 @@
 
         const roleMap = { 'admin': '管理員', 'collaborator': '協作者', 'student': '學生/家長', 'guest': '訪客' };
 
-        // 自訂 Alert/Confirm 邏輯機制
+        // 自訂 Alert/Confirm
         function showCustomAlert(message, isConfirm = false) {
             return new Promise((resolve) => {
                 const modal = document.getElementById('modal-alert');
@@ -436,7 +459,7 @@
                 const btnCancel = document.getElementById('btn-alert-cancel');
 
                 msgEl.innerText = message;
-                titleEl.innerText = isConfirm ? "請確認" : "系統提示";
+                titleEl.innerHTML = isConfirm ? "🦒 請確認" : "🦒 系統提示";
                 
                 if (isConfirm) {
                     btnCancel.classList.remove('hidden');
@@ -469,7 +492,7 @@
                 }
             } catch (error) {
                 console.error("Auth Init Error:", error);
-                elLoading.innerHTML = `<h2 class="text-xl text-shu">系統初始化失敗</h2>`;
+                elLoading.innerHTML = `<h2 class="text-xl text-danger">系統初始化失敗</h2>`;
             }
         }
 
@@ -491,12 +514,10 @@
             const regRef = collection(db, 'artifacts', appId, 'public', 'data', 'registrations');
             const settingsRef = doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'general');
 
-            // 監聽全局設定 (如系統標題)
             unsubSettings = onSnapshot(settingsRef, (docSnap) => {
                 if (docSnap.exists() && docSnap.data().siteTitle) {
                     siteSettings.siteTitle = docSnap.data().siteTitle;
                 }
-                // 更新畫面上的標題
                 document.title = siteSettings.siteTitle;
                 document.getElementById('nav-site-title').innerText = siteSettings.siteTitle;
                 document.getElementById('auth-site-title').innerText = siteSettings.siteTitle;
@@ -557,7 +578,6 @@
             if (screen === 'app') { elApp.classList.remove('hidden'); setupAppUI(); }
         }
 
-        // 登入事件處理
         document.getElementById('btn-nav-login').addEventListener('click', () => showScreen('auth'));
         document.getElementById('btn-back-to-app').addEventListener('click', () => showScreen('app'));
         document.getElementById('btn-logout').addEventListener('click', setGuestMode);
@@ -606,7 +626,7 @@
                     adminNav.classList.remove('hidden');
                     btnCreateActivity.classList.remove('hidden');
                     tabUsers.classList.toggle('hidden', currentAppUser.role !== 'admin');
-                    btnEditSiteTitle.classList.toggle('hidden', currentAppUser.role !== 'admin'); // 僅管理員可改標題
+                    btnEditSiteTitle.classList.toggle('hidden', currentAppUser.role !== 'admin');
                 } else {
                     adminNav.classList.add('hidden');
                     btnCreateActivity.classList.add('hidden');
@@ -627,18 +647,22 @@
 
             if (tab === 'activities') {
                 vAct.classList.remove('hidden'); vUsr.classList.add('hidden');
-                tAct.classList.add('border-matcha', 'text-matcha'); tAct.classList.remove('border-transparent', 'text-gray-500');
-                tUsr.classList.remove('border-matcha', 'text-matcha'); tUsr.classList.add('border-transparent', 'text-gray-500');
+                tAct.classList.add('border-b-4', 'border-primary', 'text-primary'); 
+                tAct.classList.remove('border-transparent', 'text-gray-500');
+                tUsr.classList.remove('border-b-4', 'border-primary', 'text-primary'); 
+                tUsr.classList.add('border-transparent', 'text-gray-500');
                 renderActivities(); 
             } else {
                 vAct.classList.add('hidden'); vUsr.classList.remove('hidden');
-                tUsr.classList.add('border-matcha', 'text-matcha'); tUsr.classList.remove('border-transparent', 'text-gray-500');
-                tAct.classList.remove('border-matcha', 'text-matcha'); tAct.classList.add('border-transparent', 'text-gray-500');
+                tUsr.classList.add('border-b-4', 'border-primary', 'text-primary'); 
+                tUsr.classList.remove('border-transparent', 'text-gray-500');
+                tAct.classList.remove('border-b-4', 'border-primary', 'text-primary'); 
+                tAct.classList.add('border-transparent', 'text-gray-500');
                 renderUsers();
             }
         }
 
-        // 修改系統標題邏輯
+        // 修改系統標題
         const modalEditSiteTitle = document.getElementById('modal-edit-site-title');
         document.getElementById('btn-edit-site-title').addEventListener('click', () => {
             document.getElementById('input-site-title').value = siteSettings.siteTitle;
@@ -662,7 +686,7 @@
             const container = document.getElementById('activities-container');
             container.innerHTML = '';
             if (activities.length === 0) {
-                container.innerHTML = `<div class="text-center py-10 text-gray-500">尚無調查活動。</div>`; return;
+                container.innerHTML = `<div class="text-center py-10 text-gray-600 font-bold bg-white/50 rounded-xl">🦒 尚無調查活動。</div>`; return;
             }
 
             activities.forEach(act => {
@@ -677,27 +701,24 @@
                     deadlineText = `(期限：${act.deadline} ${isExpired ? '- 已截止' : ''})`;
                 }
 
-                // 新增：將附件按鈕提取到列表上
                 let attachmentsHTML = "";
                 if (act.attachments && act.attachments.length > 0) {
                     act.attachments.forEach(att => {
-                        attachmentsHTML += `<a href="${att.url}" target="_blank" class="text-asagi hover:text-white hover:bg-asagi text-sm font-bold ml-1 md:ml-2 border border-asagi px-2 py-0.5 rounded-sm inline-flex items-center gap-1 transition-colors" title="${att.name.replace(/</g, "&lt;")}">📎 ${att.name.replace(/</g, "&lt;")}</a>`;
+                        attachmentsHTML += `<a href="${att.url}" target="_blank" class="text-info hover:text-white hover:bg-info text-sm font-bold ml-1 md:ml-2 border border-info px-2 py-0.5 rounded-lg inline-flex items-center gap-1 transition-colors bg-white shadow-sm" title="${att.name.replace(/</g, "&lt;")}">📎 ${att.name.replace(/</g, "&lt;")}</a>`;
                     });
                 }
 
                 const listRow = document.createElement('div');
-                // 使用簡潔的條列式背景與底線
-                listRow.className = "bg-white border-b-2 border-kin border-dashed p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:bg-washi/40 transition-colors";
+                listRow.className = "bg-white border-b-2 border-accent border-dashed p-4 md:p-5 rounded-xl shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:shadow-md transition-shadow";
                 
                 let rowHTML = `
                     <div class="flex items-center flex-wrap gap-x-2 gap-y-2 w-full md:w-auto">
-                        <span class="text-kin text-sm">❁</span>
-                        <!-- 將名稱改為可點擊超連結，點擊觸發 btn-view-desc -->
-                        <button class="btn-view-desc text-lg md:text-xl font-bold text-sumi hover:text-matcha underline-offset-4 hover:underline text-left leading-snug transition-colors" data-id="${act.id}">
+                        <span class="text-primary text-xl">🌿</span>
+                        <button class="btn-view-desc text-lg md:text-xl font-bold text-textDark hover:text-primary underline-offset-4 hover:underline text-left leading-snug transition-colors" data-id="${act.id}">
                             ${act.title.replace(/</g, "&lt;")}
                         </button>
                         ${attachmentsHTML}
-                        <span class="text-sm font-bold ${isExpired ? 'text-shu' : 'text-gray-500'} ml-1 md:ml-3">
+                        <span class="text-sm font-bold ${isExpired ? 'text-danger' : 'text-gray-500'} ml-1 md:ml-3">
                             ${deadlineText}
                         </span>
                     </div>
@@ -705,31 +726,29 @@
                     <div class="flex items-center gap-3 shrink-0 flex-wrap w-full md:w-auto mt-2 md:mt-0">
                 `;
 
-                // 意願區塊
                 if (isExpired) {
-                    rowHTML += `<span class="text-gray-500 font-bold text-sm px-3 py-1 bg-gray-100 rounded-sm">已截止</span>`;
+                    rowHTML += `<span class="text-gray-500 font-bold text-sm px-4 py-2 bg-gray-100 rounded-lg">已截止</span>`;
                 } else if (currentAppUser.role === 'guest') {
-                    rowHTML += `<button class="btn-goto-login px-4 py-1.5 text-sm font-bold rounded-sm border bg-matcha text-white border-matcha transition-colors shadow-sm">填報</button>`;
+                    rowHTML += `<button class="btn-goto-login px-5 py-2 text-sm font-bold rounded-xl bg-primary text-white border-b-4 border-primaryDark hover:bg-primaryDark active:border-b-0 active:translate-y-1 transition-all shadow-sm">填報</button>`;
                 } else {
                     rowHTML += `
                         <div class="flex gap-2">
-                            <button class="btn-reg-yes px-3 py-1 text-sm font-bold rounded-sm border ${regStatus === 'participating' ? 'bg-matcha text-white border-matcha' : 'bg-white text-matcha hover:bg-matcha hover:text-white border-matcha'} transition-colors shadow-sm" data-id="${act.id}">
+                            <button class="btn-reg-yes px-4 py-2 text-sm font-bold rounded-xl border-2 ${regStatus === 'participating' ? 'bg-primary text-white border-primary' : 'bg-white text-primary border-primary hover:bg-primary hover:text-white'} transition-colors shadow-sm" data-id="${act.id}">
                                 ${regStatus === 'participating' ? '✓ 已參加' : '我要參加'}
                             </button>
-                            <button class="btn-reg-no px-3 py-1 text-sm font-bold rounded-sm border ${regStatus === 'not_participating' ? 'bg-gray-500 text-white border-gray-500' : 'bg-white text-gray-500 hover:bg-gray-500 hover:text-white border-gray-500'} transition-colors shadow-sm" data-id="${act.id}">
+                            <button class="btn-reg-no px-4 py-2 text-sm font-bold rounded-xl border-2 ${regStatus === 'not_participating' ? 'bg-gray-500 text-white border-gray-500' : 'bg-white text-gray-500 border-gray-500 hover:bg-gray-500 hover:text-white'} transition-colors shadow-sm" data-id="${act.id}">
                                 ${regStatus === 'not_participating' ? '✗ 已婉拒' : '不參加'}
                             </button>
                         </div>
                     `;
                 }
 
-                // 管理員功能
                 if (canEdit) {
                     rowHTML += `
-                        <div class="flex gap-2 border-l border-gray-300 pl-3">
-                            <button class="btn-view-results text-asagi hover:text-asagi hover:underline px-1 py-1 rounded-sm font-bold text-xs" data-id="${act.id}" title="參加數：${totalParticipating}">📊 檢視結果</button>
-                            <button class="btn-edit text-kin hover:text-kin hover:underline px-1 py-1 rounded-sm font-bold text-xs" data-id="${act.id}">編輯</button>
-                            <button class="btn-delete text-shu hover:text-shu hover:underline px-1 py-1 rounded-sm font-bold text-xs" data-id="${act.id}">刪除</button>
+                        <div class="flex gap-2 border-l-2 border-gray-200 pl-3">
+                            <button class="btn-view-results text-info hover:text-white hover:bg-info border border-transparent hover:border-info px-2 py-1 rounded-lg font-bold text-xs transition-colors" data-id="${act.id}" title="參加數：${totalParticipating}">📊 結果</button>
+                            <button class="btn-edit text-accent hover:text-white hover:bg-accent border border-transparent hover:border-accent px-2 py-1 rounded-lg font-bold text-xs transition-colors" data-id="${act.id}">編輯</button>
+                            <button class="btn-delete text-danger hover:text-white hover:bg-danger border border-transparent hover:border-danger px-2 py-1 rounded-lg font-bold text-xs transition-colors" data-id="${act.id}">刪除</button>
                         </div>
                     `;
                 }
@@ -742,16 +761,14 @@
 
         // 活動列表點擊事件處理
         document.getElementById('activities-container').addEventListener('click', async (e) => {
-            const btn = e.target.closest('button');
-            if (!btn) return;
+            const btn = e.target.closest('button') || e.target.closest('a');
+            if (!btn || btn.tagName === 'A') return; // 如果點到超連結(附件)，瀏覽器自己會開新視窗
 
-            // 訪客點擊「登入以報名」
             if (btn.classList.contains('btn-goto-login')) {
                 showScreen('auth');
                 return;
             }
 
-            // 開啟活動說明
             if (btn.classList.contains('btn-view-desc')) {
                 const actId = btn.getAttribute('data-id');
                 const act = activities.find(a => a.id === actId);
@@ -760,17 +777,16 @@
                     const isExpired = act.deadline && new Date(act.deadline + 'T23:59:59') < new Date();
                     const deadlineText = act.deadline ? `填報期限：${act.deadline}` : '無期限';
                     document.getElementById('view-deadline').innerText = `🗓 ${deadlineText} ${isExpired ? '(已截止)' : ''}`;
-                    document.getElementById('view-deadline').className = `text-sm font-bold tracking-wide ${isExpired ? 'text-shu' : 'text-matchaDark'}`;
+                    document.getElementById('view-deadline').className = `text-sm font-bold tracking-wide ${isExpired ? 'text-danger' : 'text-primaryDark'}`;
                     
                     let contentHtml = act.description || '';
                     
-                    // 若有附件，顯示在內容下方
                     if (act.attachments && act.attachments.length > 0) {
-                        contentHtml += `<div class="mt-6 pt-4 border-t border-gray-200">
-                            <h4 class="font-bold text-sumi mb-3 flex items-center gap-2">📎 相關附件</h4>
-                            <ul class="flex flex-col gap-2">`;
+                        contentHtml += `<div class="mt-8 pt-5 border-t-2 border-dashed border-accent bg-bgLight -mx-6 px-6 pb-2 rounded-b-lg">
+                            <h4 class="font-bold text-textDark mb-3 flex items-center gap-2">📎 相關附件</h4>
+                            <ul class="flex flex-wrap gap-3">`;
                         act.attachments.forEach(att => {
-                            contentHtml += `<li><a href="${att.url}" target="_blank" class="text-asagi hover:text-matcha hover:underline font-bold bg-gray-50 border border-gray-200 px-3 py-2 rounded-sm inline-flex items-center gap-2 w-full md:w-auto shadow-sm">🔗 ${att.name.replace(/</g, "&lt;")}</a></li>`;
+                            contentHtml += `<li><a href="${att.url}" target="_blank" class="text-info hover:text-white hover:bg-info font-bold bg-white border-2 border-info px-4 py-2 rounded-xl inline-flex items-center gap-2 shadow-sm transition-colors">🔗 ${att.name.replace(/</g, "&lt;")}</a></li>`;
                         });
                         contentHtml += `</ul></div>`;
                     }
@@ -781,7 +797,6 @@
                 return;
             }
 
-            // 管理員檢視報名結果
             if (btn.classList.contains('btn-view-results')) {
                 const actId = btn.getAttribute('data-id');
                 viewingResultsActivityId = actId;
@@ -801,9 +816,9 @@
                         if (isPart) participatingCount++;
                         
                         tbody.innerHTML += `
-                            <tr class="border-b border-gray-200">
-                                <td class="p-2">${username.replace(/</g, "&lt;")}</td>
-                                <td class="p-2 font-bold ${isPart ? 'text-matcha' : 'text-gray-500'}">
+                            <tr class="border-b border-gray-100 hover:bg-bgLight transition-colors">
+                                <td class="p-3">${username.replace(/</g, "&lt;")}</td>
+                                <td class="p-3 font-bold ${isPart ? 'text-primary' : 'text-gray-500'}">
                                     ${isPart ? '✓ 已參加' : '✗ 已婉拒'}
                                 </td>
                             </tr>
@@ -811,7 +826,7 @@
                     });
                     
                     if (actRegs.length === 0) {
-                        tbody.innerHTML = `<tr><td colspan="2" class="p-4 text-center text-gray-500">尚無人回應</td></tr>`;
+                        tbody.innerHTML = `<tr><td colspan="2" class="p-5 text-center text-gray-500">尚無人回應</td></tr>`;
                     }
                     
                     document.getElementById('results-stats').innerText = `總回應數：${actRegs.length} | 已參加：${participatingCount}`;
@@ -823,7 +838,6 @@
             const actId = btn.getAttribute('data-id');
             if (!actId) return;
             
-            // 編輯/刪除/報名邏輯
             if (btn.classList.contains('btn-edit')) {
                 openActivityModal(actId);
             }
@@ -845,22 +859,17 @@
             }
         });
 
-        // 綁定檢視活動說明的關閉邏輯
         document.getElementById('btn-close-view-modal').addEventListener('click', () => document.getElementById('modal-view-activity').classList.add('hidden'));
         document.getElementById('btn-close-view-bottom').addEventListener('click', () => document.getElementById('modal-view-activity').classList.add('hidden'));
-
-        // 綁定檢視結果的關閉邏輯
         document.getElementById('btn-close-results').addEventListener('click', () => document.getElementById('modal-view-results').classList.add('hidden'));
         document.getElementById('btn-close-results-bottom').addEventListener('click', () => document.getElementById('modal-view-results').classList.add('hidden'));
 
-        // Excel (CSV) 匯出邏輯
         document.getElementById('btn-export-csv').addEventListener('click', () => {
             if (!viewingResultsActivityId) return;
             const act = activities.find(a => a.id === viewingResultsActivityId);
             if (!act) return;
 
             const actRegs = registrations.filter(r => r.activityId === viewingResultsActivityId);
-            // 加入 BOM 確保 Excel 開啟時中文不會亂碼
             let csvContent = "\uFEFF活動名稱,學號/帳號(名稱),意願,回覆時間\n";
             
             actRegs.forEach(r => {
@@ -889,18 +898,18 @@
             appUsers.forEach(u => {
                 const isSelf = u.id === currentAppUser.id;
                 tbody.innerHTML += `
-                    <tr class="border-b border-gray-200">
-                        <td class="p-3">${u.username.replace(/</g, "&lt;")} ${isSelf ? '<span class="text-xs text-matcha">(自己)</span>' : ''}</td>
-                        <td class="p-3">${roleMap[u.role]}</td>
-                        <td class="p-3">
-                            <select class="role-select p-1 border border-kin rounded-sm" data-id="${u.id}" ${isSelf ? 'disabled' : ''}>
+                    <tr class="border-b border-gray-100 hover:bg-bgLight transition-colors">
+                        <td class="p-4">${u.username.replace(/</g, "&lt;")} ${isSelf ? '<span class="text-xs text-primary font-bold">(自己)</span>' : ''}</td>
+                        <td class="p-4">${roleMap[u.role]}</td>
+                        <td class="p-4">
+                            <select class="role-select p-2 border-2 border-accent rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/40 bg-white" data-id="${u.id}" ${isSelf ? 'disabled' : ''}>
                                 <option value="student" ${u.role === 'student' ? 'selected' : ''}>學生/家長</option>
                                 <option value="collaborator" ${u.role === 'collaborator' ? 'selected' : ''}>協作者</option>
                                 <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>管理員</option>
                             </select>
                         </td>
-                        <td class="p-3">
-                            ${!isSelf ? `<button class="btn-del-user text-shu font-bold text-sm" data-id="${u.id}">刪除</button>` : ''}
+                        <td class="p-4">
+                            ${!isSelf ? `<button class="btn-del-user text-danger font-bold text-sm hover:underline" data-id="${u.id}">刪除</button>` : ''}
                         </td>
                     </tr>
                 `;
@@ -927,11 +936,11 @@
             const role = document.getElementById('select-new-role').value;
             const msg = document.getElementById('add-user-msg');
             
-            if (!usr || !pwd) { msg.textContent = '填寫不完整'; msg.className = 'text-shu text-sm font-bold ml-2'; return; }
-            if (appUsers.some(u => u.username === usr)) { msg.textContent = '帳號已存在'; msg.className = 'text-shu text-sm font-bold ml-2'; return; }
+            if (!usr || !pwd) { msg.textContent = '填寫不完整'; msg.className = 'text-danger text-sm font-bold ml-2'; return; }
+            if (appUsers.some(u => u.username === usr)) { msg.textContent = '帳號已存在'; msg.className = 'text-danger text-sm font-bold ml-2'; return; }
 
             await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'appUsers'), { username: usr, password: pwd, role: role, createdAt: Date.now() });
-            msg.textContent = '新增成功！'; msg.className = 'text-matcha text-sm font-bold ml-2';
+            msg.textContent = '新增成功！'; msg.className = 'text-primary text-sm font-bold ml-2';
             document.getElementById('input-new-username').value = ''; document.getElementById('input-new-password').value = '';
             setTimeout(() => msg.textContent = '', 3000);
         });
@@ -939,7 +948,7 @@
         document.getElementById('btn-bulk-import').addEventListener('click', async () => {
             const lines = document.getElementById('input-bulk-users').value.trim().split('\n');
             const msg = document.getElementById('bulk-import-msg');
-            if (!lines[0]) { msg.textContent = '無資料'; msg.className = 'text-shu ml-2'; return; }
+            if (!lines[0]) { msg.textContent = '無資料'; msg.className = 'text-danger ml-2'; return; }
             
             let success = 0;
             for (const line of lines) {
@@ -949,7 +958,7 @@
                     success++;
                 }
             }
-            msg.textContent = `匯入成功: ${success} 筆`; msg.className = 'text-matcha font-bold text-sm ml-2';
+            msg.textContent = `匯入成功: ${success} 筆`; msg.className = 'text-primary font-bold text-sm ml-2';
             document.getElementById('input-bulk-users').value = '';
             setTimeout(() => msg.textContent = '', 4000);
         });
@@ -965,18 +974,17 @@
         document.getElementById('btn-save-pwd').addEventListener('click', async () => {
             const newPwd = document.getElementById('input-new-pwd').value.trim();
             const msg = document.getElementById('pwd-msg');
-            if (!newPwd) { msg.textContent = '不能為空'; msg.className = 'text-shu'; return; }
+            if (!newPwd) { msg.textContent = '不能為空'; msg.className = 'text-danger'; return; }
             
             try {
                 await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'appUsers', currentAppUser.id), { password: newPwd });
-                msg.textContent = '修改成功！即將關閉...'; msg.className = 'text-matcha';
+                msg.textContent = '修改成功！即將關閉...'; msg.className = 'text-primary';
                 setTimeout(() => modalPwd.classList.add('hidden'), 1500);
             } catch (e) {
-                msg.textContent = '失敗: ' + e.message; msg.className = 'text-shu';
+                msg.textContent = '失敗: ' + e.message; msg.className = 'text-danger';
             }
         });
 
-        // Quill 編輯器初始化
         function initEditor() {
             if (!quillInstance) {
                 const toolbarOptions = [
@@ -998,21 +1006,20 @@
             editingActivityId = actId;
             modalActivity.classList.remove('hidden');
             const attachContainer = document.getElementById('attachments-edit-container');
-            attachContainer.innerHTML = ''; // 清空附件
+            attachContainer.innerHTML = ''; 
 
             if (actId) {
-                document.getElementById('modal-edit-title').innerText = "❁ 修改活動";
+                document.getElementById('modal-edit-title').innerHTML = "🦒 修改活動";
                 const act = activities.find(a => a.id === actId);
                 document.getElementById('input-activity-title').value = act.title;
                 document.getElementById('input-activity-deadline').value = act.deadline || '';
                 quillInstance.root.innerHTML = act.description || '';
                 
-                // 載入現有附件
                 if (act.attachments && act.attachments.length > 0) {
                     act.attachments.forEach(att => attachContainer.appendChild(createAttachmentRow(att.name, att.url)));
                 }
             } else {
-                document.getElementById('modal-edit-title').innerText = "❁ 新增活動";
+                document.getElementById('modal-edit-title').innerHTML = "🦒 新增活動";
                 document.getElementById('input-activity-title').value = '';
                 document.getElementById('input-activity-deadline').value = '';
                 quillInstance.root.innerHTML = '';
@@ -1028,7 +1035,6 @@
             const deadline = document.getElementById('input-activity-deadline').value;
             const desc = quillInstance.root.innerHTML;
             
-            // 抓取所有附件
             const attachNames = document.querySelectorAll('.attach-name');
             const attachUrls = document.querySelectorAll('.attach-url');
             const attachments = [];

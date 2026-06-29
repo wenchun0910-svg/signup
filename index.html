@@ -33,7 +33,7 @@
         }
     </script>
 
-    <!-- Quill (Rich Text Editor) - 取代 SunEditor，CDN 環境更穩定且支援齊全 -->
+    <!-- Quill (Rich Text Editor) -->
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
 
@@ -48,7 +48,7 @@
         .hidden { display: none !important; }
         .modal-overlay { background-color: rgba(43, 43, 43, 0.8); }
         
-        /* 自訂 Quill 編輯器樣式 (和風虛線邊框) */
+        /* 自訂 Quill 編輯器樣式 */
         .ql-toolbar.ql-snow {
             border: 2px dashed #c4a052 !important;
             border-bottom: none !important;
@@ -62,15 +62,22 @@
             background-color: transparent !important;
             font-family: 'Noto Serif TC', serif;
             font-size: 16px;
-            height: 220px;
+            height: 250px;
         }
+        
+        /* 保留檢視模式的 Quill 樣式 */
         .ql-editor {
             white-space: pre-wrap;
         }
-        
-        /* 預設活動內文表格樣式 (若貼上表格時使用) */
         .activity-desc table { border-collapse: collapse; width: 100%; }
         .activity-desc table th, .activity-desc table td { border: 1px solid #c4a052; padding: 8px; }
+        
+        /* 標題特定圖示調整 */
+        .title-icon {
+            font-size: 1.2em;
+            line-height: 1;
+            margin-right: 4px;
+        }
     </style>
 </head>
 <body class="font-serif min-h-screen flex flex-col">
@@ -83,7 +90,7 @@
         </div>
     </div>
 
-    <!-- 登入畫面 (無註冊功能) -->
+    <!-- 登入畫面 -->
     <div id="auth-screen" class="hidden flex-grow flex items-center justify-center p-4">
         <div class="bg-white p-8 rounded-sm japanese-border card-shadow max-w-md w-full relative">
             <div class="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-washi px-4 py-1 border-2 border-kin text-kin font-bold rounded-full">
@@ -102,8 +109,11 @@
             
             <p id="auth-error" class="text-shu text-sm mb-4 hidden text-center font-bold"></p>
             
-            <button id="btn-submit-auth" class="w-full bg-matcha hover:bg-matchaDark text-white font-bold py-2 px-4 rounded-sm transition-colors mb-4 border border-matchaDark">
+            <button id="btn-submit-auth" class="w-full bg-matcha hover:bg-matchaDark text-white font-bold py-2 px-4 rounded-sm transition-colors mb-4 border border-matchaDark shadow-sm">
                 登入
+            </button>
+            <button id="btn-back-to-app" class="w-full bg-washi hover:bg-kin hover:text-white text-sumi font-bold py-2 px-4 rounded-sm transition-colors mb-4 border border-kin shadow-sm">
+                返回活動列表 (訪客瀏覽)
             </button>
             <p class="text-xs text-gray-400 text-center mt-2 border-t border-gray-200 pt-2">註：系統初始會自動建立 admin / admin 帳號，其餘帳號需由管理員匯入。</p>
         </div>
@@ -123,7 +133,10 @@
                         <div class="text-sm font-bold text-sumi" id="nav-username">使用者</div>
                         <div class="text-xs text-asagi" id="nav-role">角色</div>
                     </div>
-                    <!-- 修改密碼與登出 -->
+                    <!-- 訪客登入 / 修改密碼與登出 -->
+                    <button id="btn-nav-login" class="bg-matcha hover:bg-matchaDark text-white px-3 md:px-5 py-1.5 rounded-sm text-xs md:text-sm transition-colors font-bold shadow-sm hidden">
+                        系統登入
+                    </button>
                     <button id="btn-change-pwd-modal" class="bg-washi border border-kin text-sumi hover:bg-kin hover:text-white px-2 md:px-4 py-1 rounded-sm text-xs md:text-sm transition-colors font-bold">
                         改密碼
                     </button>
@@ -145,9 +158,12 @@
         <main class="max-w-6xl mx-auto px-4 py-8 w-full flex-grow">
             <!-- 活動列表區塊 -->
             <section id="view-activities">
-                <div class="flex justify-between items-end mb-6 border-b-2 border-kin pb-2">
-                    <h2 class="text-xl md:text-2xl font-bold text-sumi">❁ 班級活動列表</h2>
-                    <button id="btn-create-activity" class="hidden bg-matcha hover:bg-matchaDark text-white px-3 py-2 rounded-sm font-bold shadow-sm flex items-center gap-1 text-sm md:text-base">
+                <!-- 更新為使用者指定的主視覺標題設計 -->
+                <div class="flex justify-between items-end mb-6 border-b-[3px] border-kin pb-3">
+                    <h2 class="text-2xl md:text-4xl font-black text-sumi tracking-wider flex items-center">
+                        <span class="title-icon text-sumi">✿</span> 班級活動列表
+                    </h2>
+                    <button id="btn-create-activity" class="hidden bg-matcha hover:bg-matchaDark text-white px-4 py-2 rounded-sm font-bold shadow-sm flex items-center gap-1 text-sm md:text-base transition-colors">
                         <span>＋</span> 新增活動
                     </button>
                 </div>
@@ -156,8 +172,10 @@
 
             <!-- 用戶管理區塊 -->
             <section id="view-users" class="hidden">
-                <div class="mb-6 border-b-2 border-kin pb-2">
-                    <h2 class="text-2xl font-bold text-sumi">❁ 用戶帳號管理</h2>
+                <div class="mb-6 border-b-[3px] border-kin pb-3">
+                    <h2 class="text-2xl md:text-4xl font-black text-sumi tracking-wider flex items-center">
+                        <span class="title-icon text-sumi">✿</span> 用戶帳號管理
+                    </h2>
                 </div>
                 
                 <!-- 新增帳號 (單一與大量) -->
@@ -214,38 +232,56 @@
         </main>
     </div>
 
-    <!-- 活動編輯 Modal -->
-    <div id="modal-activity" class="hidden fixed inset-0 modal-overlay z-[40] flex items-center justify-center p-4">
+    <!-- 檢視活動說明 Modal (學生/家長用來開新視窗觀看) -->
+    <div id="modal-view-activity" class="hidden fixed inset-0 modal-overlay z-[50] flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-4xl max-h-[90vh] flex flex-col rounded-sm japanese-border shadow-2xl">
+            <div class="p-4 border-b border-kin flex justify-between items-center bg-washi">
+                <h3 id="view-title" class="text-xl md:text-2xl font-black text-sumi leading-snug"></h3>
+                <button id="btn-close-view-modal" class="text-2xl hover:text-shu transition-colors">&times;</button>
+            </div>
+            <div class="p-2 bg-gray-50 border-b border-kin px-6">
+                <span id="view-deadline" class="text-sm font-bold tracking-wide"></span>
+            </div>
+            <!-- 套用 ql-editor 確保排版樣式正確顯示 -->
+            <div class="p-6 flex-grow overflow-y-auto activity-desc ql-editor bg-white" id="view-content">
+                <!-- 內容動態載入 -->
+            </div>
+            <div class="p-4 border-t border-kin flex justify-end bg-washi">
+                <button id="btn-close-view-bottom" class="px-6 py-2 border-2 border-sumi text-sumi hover:bg-kin hover:text-white hover:border-kin transition-colors rounded-sm font-bold">關閉視窗</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 活動編輯 Modal (管理員/協作者專用) -->
+    <div id="modal-activity" class="hidden fixed inset-0 modal-overlay z-[50] flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-4xl max-h-[90vh] flex flex-col rounded-sm japanese-border">
             <div class="p-4 border-b border-kin flex justify-between items-center bg-washi">
                 <h3 id="modal-title" class="text-xl font-bold text-sumi">新增/編輯活動</h3>
-                <button id="btn-close-modal" class="text-2xl hover:text-shu">&times;</button>
+                <button id="btn-close-edit-modal" class="text-2xl hover:text-shu">&times;</button>
             </div>
             <div class="p-6 flex-grow overflow-y-auto">
                 <div class="mb-4">
                     <label class="block text-sm font-bold mb-2 text-sumi">活動名稱 (標題)</label>
-                    <input type="text" id="input-activity-title" class="w-full p-2 border border-kin rounded-sm" placeholder="輸入標題">
+                    <input type="text" id="input-activity-title" class="w-full p-2 border border-kin rounded-sm focus:outline-none focus:border-matcha" placeholder="輸入標題">
                 </div>
-                <!-- 新增填報期限欄位 -->
                 <div class="mb-4">
                     <label class="block text-sm font-bold mb-2 text-sumi">填報期限</label>
-                    <input type="date" id="input-activity-deadline" class="w-full p-2 border border-kin rounded-sm bg-washi">
+                    <input type="date" id="input-activity-deadline" class="w-full p-2 border border-kin rounded-sm bg-washi focus:outline-none focus:border-matcha">
                 </div>
                 <div class="mb-4">
                     <label class="block text-sm font-bold mb-2 text-sumi">活動說明 (支援多行與格式)</label>
-                    <!-- 編輯器將會取代這個區塊 -->
                     <div id="editor-container"></div>
                 </div>
             </div>
             <div class="p-4 border-t border-kin flex justify-end gap-3 bg-washi">
-                <button id="btn-cancel-modal" class="px-4 py-2 border border-sumi text-sumi hover:bg-gray-100 rounded-sm font-bold">取消</button>
-                <button id="btn-save-activity" class="px-4 py-2 bg-matcha text-white rounded-sm font-bold">儲存</button>
+                <button id="btn-cancel-edit-modal" class="px-4 py-2 border border-sumi text-sumi hover:bg-gray-100 rounded-sm font-bold transition-colors">取消</button>
+                <button id="btn-save-activity" class="px-6 py-2 bg-matcha hover:bg-matchaDark text-white rounded-sm font-bold transition-colors">儲存</button>
             </div>
         </div>
     </div>
 
     <!-- 修改密碼 Modal -->
-    <div id="modal-pwd" class="hidden fixed inset-0 modal-overlay z-[40] flex items-center justify-center p-4">
+    <div id="modal-pwd" class="hidden fixed inset-0 modal-overlay z-[60] flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-sm flex flex-col rounded-sm japanese-border">
             <div class="p-4 border-b border-kin flex justify-between items-center bg-washi">
                 <h3 class="text-lg font-bold text-sumi">修改密碼</h3>
@@ -254,16 +290,16 @@
             <div class="p-6">
                 <div class="mb-4">
                     <label class="block text-sm font-bold mb-2">新密碼</label>
-                    <input type="password" id="input-new-pwd" class="w-full p-2 border border-kin rounded-sm bg-washi" placeholder="輸入新密碼">
+                    <input type="password" id="input-new-pwd" class="w-full p-2 border border-kin rounded-sm bg-washi focus:outline-none focus:border-matcha" placeholder="輸入新密碼">
                 </div>
                 <p id="pwd-msg" class="text-sm font-bold mb-4 text-center"></p>
-                <button id="btn-save-pwd" class="w-full py-2 bg-matcha text-white rounded-sm font-bold">確認修改</button>
+                <button id="btn-save-pwd" class="w-full py-2 bg-matcha hover:bg-matchaDark transition-colors text-white rounded-sm font-bold">確認修改</button>
             </div>
         </div>
     </div>
 
     <!-- 系統自訂 Alert/Confirm Modal -->
-    <div id="modal-alert" class="hidden fixed inset-0 modal-overlay z-[60] flex items-center justify-center p-4">
+    <div id="modal-alert" class="hidden fixed inset-0 modal-overlay z-[70] flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-sm rounded-sm japanese-border shadow-lg">
             <div class="p-4 border-b border-kin bg-washi">
                 <h3 id="modal-alert-title" class="text-lg font-bold text-sumi">提示</h3>
@@ -298,7 +334,6 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         
-        // 資料庫前綴路徑識別碼
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'wafu-school-app';
         // =====================================================================
 
@@ -309,7 +344,7 @@
         let activities = [];        
         let registrations = [];     
         let unsubUsers, unsubActivities, unsubRegistrations;
-        let quillInstance = null; // 改用 Quill
+        let quillInstance = null; 
         let editingActivityId = null;
 
         // UI Elements
@@ -320,6 +355,9 @@
         const authPassword = document.getElementById('auth-password');
         const authError = document.getElementById('auth-error');
         const btnSubmitAuth = document.getElementById('btn-submit-auth');
+
+        // 定義系統角色，新增「訪客」身分
+        const roleMap = { 'admin': '管理員', 'collaborator': '協作者', 'student': '學生/家長', 'guest': '訪客' };
 
         // 自訂 Alert/Confirm 邏輯機制
         function showCustomAlert(message, isConfirm = false) {
@@ -376,7 +414,7 @@
             } else {
                 stopDataListeners();
                 fbUser = null; currentAppUser = null;
-                showScreen('auth');
+                setGuestMode(); // 退回訪客模式
             }
         });
 
@@ -415,19 +453,33 @@
             if (unsubRegistrations) unsubRegistrations();
         }
 
+        // 檢查登入狀態：若未登入，預設切換至訪客模式
         function checkAppSession() {
             if(elLoading.style.display !== 'none' && appUsers.length > 0) {
                 elLoading.style.display = 'none';
-                showScreen('auth');
+                if (!currentAppUser) {
+                    setGuestMode(); // 首次進入網頁直接進入訪客模式
+                } else {
+                    showScreen('app');
+                }
             }
-            if (currentAppUser) {
+            
+            // 如果當前已有帳號登入 (非訪客)，驗證其權限是否有被異動
+            if (currentAppUser && currentAppUser.role !== 'guest') {
                 const updatedUser = appUsers.find(u => u.id === currentAppUser.id);
-                if (!updatedUser) handleLogout();
-                else if (updatedUser.role !== currentAppUser.role) {
+                if (!updatedUser) {
+                    setGuestMode();
+                } else if (updatedUser.role !== currentAppUser.role) {
                     currentAppUser = updatedUser;
                     setupAppUI();
                 }
             }
+        }
+
+        // 切換至訪客模式邏輯
+        function setGuestMode() {
+            currentAppUser = { id: 'guest', username: '訪客', role: 'guest' };
+            showScreen('app');
         }
 
         function showScreen(screen) {
@@ -436,6 +488,17 @@
             if (screen === 'app') { elApp.classList.remove('hidden'); setupAppUI(); }
         }
 
+        // 點擊「系統登入」按鈕，顯示登入畫面
+        document.getElementById('btn-nav-login').addEventListener('click', () => {
+            showScreen('auth');
+        });
+
+        // 在登入畫面點擊「返回首頁」，退回活動列表
+        document.getElementById('btn-back-to-app').addEventListener('click', () => {
+            showScreen('app');
+        });
+
+        // 執行登入
         btnSubmitAuth.addEventListener('click', () => {
             const username = authUsername.value.trim();
             const password = authPassword.value.trim();
@@ -448,19 +511,18 @@
             const user = appUsers.find(u => u.username === username && u.password === password);
             if (user) {
                 currentAppUser = user;
+                authUsername.value = ''; authPassword.value = '';
                 showScreen('app');
             } else {
                 authError.innerText = "帳號或密碼錯誤"; authError.classList.remove('hidden');
             }
         });
 
+        // 登出：退回訪客模式
         document.getElementById('btn-logout').addEventListener('click', handleLogout);
         function handleLogout() {
-            currentAppUser = null; authUsername.value = ''; authPassword.value = '';
-            showScreen('auth');
+            setGuestMode();
         }
-
-        const roleMap = { 'admin': '管理員', 'collaborator': '協作者', 'student': '學生/家長' };
 
         function setupAppUI() {
             document.getElementById('nav-username').innerText = currentAppUser.username;
@@ -470,13 +532,28 @@
             const btnCreateActivity = document.getElementById('btn-create-activity');
             const tabUsers = document.getElementById('tab-users');
 
-            if (currentAppUser.role === 'admin' || currentAppUser.role === 'collaborator') {
-                adminNav.classList.remove('hidden');
-                btnCreateActivity.classList.remove('hidden');
-                tabUsers.classList.toggle('hidden', currentAppUser.role !== 'admin');
-            } else {
+            // 判斷是否為訪客，調整導覽列按鈕
+            if (currentAppUser.role === 'guest') {
+                document.getElementById('btn-nav-login').classList.remove('hidden');
+                document.getElementById('btn-change-pwd-modal').classList.add('hidden');
+                document.getElementById('btn-logout').classList.add('hidden');
+                
                 adminNav.classList.add('hidden');
                 btnCreateActivity.classList.add('hidden');
+            } else {
+                // 已登入狀態
+                document.getElementById('btn-nav-login').classList.add('hidden');
+                document.getElementById('btn-change-pwd-modal').classList.remove('hidden');
+                document.getElementById('btn-logout').classList.remove('hidden');
+                
+                if (currentAppUser.role === 'admin' || currentAppUser.role === 'collaborator') {
+                    adminNav.classList.remove('hidden');
+                    btnCreateActivity.classList.remove('hidden');
+                    tabUsers.classList.toggle('hidden', currentAppUser.role !== 'admin');
+                } else {
+                    adminNav.classList.add('hidden');
+                    btnCreateActivity.classList.add('hidden');
+                }
             }
             switchTab('activities');
         }
@@ -502,6 +579,7 @@
             }
         }
 
+        // 活動渲染
         function renderActivities() {
             const container = document.getElementById('activities-container');
             container.innerHTML = '';
@@ -510,6 +588,7 @@
             }
 
             activities.forEach(act => {
+                // 嚴格權限控管：訪客或學生沒有編輯/刪除按鈕
                 const canEdit = currentAppUser.role === 'admin' || (currentAppUser.role === 'collaborator' && act.creatorId === currentAppUser.id);
                 const userReg = registrations.find(r => r.activityId === act.id && r.userId === currentAppUser.id);
                 const regStatus = userReg ? userReg.status : 'none';
@@ -522,33 +601,40 @@
                 card.className = "bg-white rounded-sm japanese-border card-shadow flex flex-col h-full";
                 
                 let cardHTML = `
-                    <div class="bg-washi border-b border-kin p-4 flex justify-between items-start">
+                    <div class="bg-washi border-b border-kin p-5 flex justify-between items-start">
                         <div>
-                            <h3 class="text-lg md:text-xl font-bold text-sumi leading-snug">${act.title.replace(/</g, "&lt;")}</h3>
-                            <p class="text-sm font-bold mt-1 ${isExpired ? 'text-shu' : 'text-matchaDark'}">🗓 ${deadlineText} ${isExpired ? '(已截止)' : ''}</p>
+                            <h3 class="text-xl md:text-2xl font-black text-sumi leading-snug tracking-wide">${act.title.replace(/</g, "&lt;")}</h3>
+                            <p class="text-sm font-bold mt-2 ${isExpired ? 'text-shu' : 'text-matchaDark'}">🗓 ${deadlineText} ${isExpired ? '(已截止)' : ''}</p>
                         </div>
                         ${canEdit ? `
-                        <div class="flex gap-2 shrink-0 ml-2">
-                            <button class="btn-edit text-asagi font-bold text-sm" data-id="${act.id}">編輯</button>
-                            <button class="btn-delete text-shu font-bold text-sm" data-id="${act.id}">刪除</button>
+                        <div class="flex gap-3 shrink-0 ml-4">
+                            <button class="btn-edit text-asagi hover:text-white hover:bg-asagi border border-asagi transition-colors px-2 py-1 rounded-sm font-bold text-sm" data-id="${act.id}">編輯</button>
+                            <button class="btn-delete text-shu hover:text-white hover:bg-shu border border-shu transition-colors px-2 py-1 rounded-sm font-bold text-sm" data-id="${act.id}">刪除</button>
                         </div>` : ''}
                     </div>
-                    <div class="p-4 flex-grow overflow-y-auto max-h-64 bg-transparent border-none activity-desc">
-                        ${act.description}
+                    
+                    <div class="p-6 flex-grow flex items-center justify-center bg-white border-b border-kin border-dashed">
+                        <button class="btn-view-desc w-full bg-washi hover:bg-kin hover:text-white border border-kin text-sumi py-3 rounded-sm font-bold transition-colors flex items-center justify-center gap-2 text-lg shadow-sm" data-id="${act.id}">
+                            <span>📄</span> 點擊查看活動說明
+                        </button>
                     </div>
-                    <div class="border-t border-kin p-4 bg-gray-50 flex flex-wrap items-center justify-between gap-4 mt-auto">
-                        <div class="flex items-center gap-2">
-                            <span class="text-sm font-bold text-gray-600">您的意願：</span>
+
+                    <div class="p-4 bg-gray-50 flex flex-wrap items-center justify-between gap-4 mt-auto">
+                        <div class="flex items-center gap-2 w-full sm:w-auto">
+                            <span class="text-sm font-bold text-gray-600">意願：</span>
                 `;
 
                 if (isExpired) {
                     cardHTML += `<span class="text-gray-500 font-bold text-sm px-3 py-1 bg-gray-200 border border-gray-300 rounded-sm">報名已截止</span>`;
+                } else if (currentAppUser.role === 'guest') {
+                    // 若為訪客，顯示引導登入按鈕
+                    cardHTML += `<button class="btn-goto-login flex-1 sm:flex-none px-4 py-1.5 text-sm font-bold rounded-sm border bg-matcha text-white border-matcha transition-colors">登入以報名</button>`;
                 } else {
                     cardHTML += `
-                            <button class="btn-reg-yes px-2 py-1 text-xs md:text-sm font-bold rounded-sm border ${regStatus === 'participating' ? 'bg-matcha text-white border-matcha' : 'bg-white text-matcha border-matcha'} transition-colors" data-id="${act.id}">
+                            <button class="btn-reg-yes flex-1 sm:flex-none px-3 py-1.5 text-sm font-bold rounded-sm border ${regStatus === 'participating' ? 'bg-matcha text-white border-matcha' : 'bg-white text-matcha hover:bg-matcha hover:text-white border-matcha'} transition-colors" data-id="${act.id}">
                                 ${regStatus === 'participating' ? '✓ 已參加' : '我要參加'}
                             </button>
-                            <button class="btn-reg-no px-2 py-1 text-xs md:text-sm font-bold rounded-sm border ${regStatus === 'not_participating' ? 'bg-gray-500 text-white border-gray-500' : 'bg-white text-gray-500 border-gray-500'} transition-colors" data-id="${act.id}">
+                            <button class="btn-reg-no flex-1 sm:flex-none px-3 py-1.5 text-sm font-bold rounded-sm border ${regStatus === 'not_participating' ? 'bg-gray-500 text-white border-gray-500' : 'bg-white text-gray-500 hover:bg-gray-500 hover:text-white border-gray-500'} transition-colors" data-id="${act.id}">
                                 ${regStatus === 'not_participating' ? '✗ 已婉拒' : '不參加'}
                             </button>
                     `;
@@ -556,7 +642,7 @@
 
                 cardHTML += `
                         </div>
-                        ${canEdit ? `<div class="text-sm font-bold text-asagi">目前參加人數：${totalParticipating} 人</div>` : ''}
+                        ${canEdit ? `<div class="text-sm font-bold text-asagi w-full sm:w-auto text-right">參加人數：${totalParticipating} 人</div>` : ''}
                     </div>
                 `;
                 card.innerHTML = cardHTML;
@@ -564,12 +650,39 @@
             });
         }
 
+        // 綁定檢視視窗的關閉邏輯
+        const modalViewActivity = document.getElementById('modal-view-activity');
+        document.getElementById('btn-close-view-modal').addEventListener('click', () => modalViewActivity.classList.add('hidden'));
+        document.getElementById('btn-close-view-bottom').addEventListener('click', () => modalViewActivity.classList.add('hidden'));
+
         document.getElementById('activities-container').addEventListener('click', async (e) => {
             const t = e.target;
+
+            // 處理「查看活動說明」按鈕
+            const btnView = t.closest('.btn-view-desc');
+            if (btnView) {
+                const actId = btnView.getAttribute('data-id');
+                const act = activities.find(a => a.id === actId);
+                if (act) {
+                    document.getElementById('view-title').innerText = act.title;
+                    const isExpired = act.deadline && new Date(act.deadline + 'T23:59:59') < new Date();
+                    const deadlineText = act.deadline ? `填報期限：${act.deadline}` : '無期限';
+                    document.getElementById('view-deadline').innerText = `🗓 ${deadlineText} ${isExpired ? '(已截止)' : ''}`;
+                    document.getElementById('view-deadline').className = `text-sm font-bold tracking-wide ${isExpired ? 'text-shu' : 'text-matchaDark'}`;
+                    document.getElementById('view-content').innerHTML = act.description;
+                    modalViewActivity.classList.remove('hidden');
+                }
+                return;
+            }
+
             const actId = t.getAttribute('data-id');
             if (!actId) return;
-
-            if (t.classList.contains('btn-edit')) openActivityModal(actId);
+            
+            // 處理訪客點擊「登入以報名」
+            if (t.classList.contains('btn-goto-login')) {
+                showScreen('auth');
+            }
+            else if (t.classList.contains('btn-edit')) openActivityModal(actId);
             else if (t.classList.contains('btn-delete')) {
                 if (await showCustomAlert("確定要刪除這項活動嗎？", true)) {
                     await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'activities', actId));
@@ -588,6 +701,7 @@
             }
         });
 
+        // 帳號管理 (Admin)
         function renderUsers() {
             if (!currentAppUser || currentAppUser.role !== 'admin') return;
             const tbody = document.getElementById('users-table-body');
@@ -687,7 +801,6 @@
         // -------------------------------------------------------------
         function initEditor() {
             if (!quillInstance) {
-                // 定義符合使用者截圖的工具列：字型、大小、顏色、粗斜體底線、連結
                 const toolbarOptions = [
                     [{ 'font': [] }, { 'size': ['small', false, 'large', 'huge'] }, { 'color': [] }],
                     ['bold', 'italic', 'underline'],
@@ -726,8 +839,8 @@
         }
 
         document.getElementById('btn-create-activity').addEventListener('click', () => openActivityModal());
-        document.getElementById('btn-close-modal').addEventListener('click', () => modalActivity.classList.add('hidden'));
-        document.getElementById('btn-cancel-modal').addEventListener('click', () => modalActivity.classList.add('hidden'));
+        document.getElementById('btn-close-edit-modal').addEventListener('click', () => modalActivity.classList.add('hidden'));
+        document.getElementById('btn-cancel-edit-modal').addEventListener('click', () => modalActivity.classList.add('hidden'));
 
         document.getElementById('btn-save-activity').addEventListener('click', async () => {
             const title = document.getElementById('input-activity-title').value.trim();

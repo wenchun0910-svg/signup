@@ -310,6 +310,15 @@
                     <label class="block text-sm font-bold mb-2 text-sumi">活動說明 (支援多行與格式)</label>
                     <div id="editor-container"></div>
                 </div>
+                
+                <!-- 新增附件區塊 -->
+                <div class="mb-2 border-t border-kin pt-4 mt-4">
+                    <div class="flex justify-between items-center mb-3">
+                        <label class="block text-sm font-bold text-sumi flex items-center gap-1">📎 附件連結 (雲端硬碟或圖片網址)</label>
+                        <button type="button" id="btn-add-attachment" class="text-asagi hover:text-white hover:bg-asagi border border-asagi px-2 py-1 rounded-sm text-xs transition-colors font-bold">+ 新增附件</button>
+                    </div>
+                    <div id="attachments-edit-container" class="flex flex-col gap-2"></div>
+                </div>
             </div>
             <div class="p-4 border-t border-kin flex justify-end gap-3 bg-washi">
                 <button id="btn-cancel-edit-modal" class="px-4 py-2 border border-sumi text-sumi hover:bg-gray-100 rounded-sm font-bold transition-colors">取消</button>
@@ -385,6 +394,28 @@
         let quillInstance = null; 
         let editingActivityId = null;
         let viewingResultsActivityId = null; 
+
+        // 附件相關邏輯
+        function createAttachmentRow(name = '', url = '') {
+            const row = document.createElement('div');
+            row.className = 'flex gap-2 items-center';
+            row.innerHTML = `
+                <input type="text" class="attach-name w-1/3 p-2 border border-kin rounded-sm text-sm focus:outline-none focus:border-matcha" placeholder="附件名稱 (如: 簡章)" value="${name}">
+                <input type="url" class="attach-url w-2/3 p-2 border border-kin rounded-sm text-sm focus:outline-none focus:border-matcha" placeholder="貼上網址 (https://...)" value="${url}">
+                <button type="button" class="btn-remove-attach text-shu hover:text-red-700 font-bold px-2 text-lg">&times;</button>
+            `;
+            return row;
+        }
+
+        document.getElementById('btn-add-attachment').addEventListener('click', () => {
+            document.getElementById('attachments-edit-container').appendChild(createAttachmentRow());
+        });
+
+        document.getElementById('attachments-edit-container').addEventListener('click', (e) => {
+            if(e.target.classList.contains('btn-remove-attach')) {
+                e.target.closest('.flex').remove();
+            }
+        });
 
         const elLoading = document.getElementById('loading-screen');
         const elAuth = document.getElementById('auth-screen');
@@ -670,7 +701,7 @@
                 if (isExpired) {
                     rowHTML += `<span class="text-gray-500 font-bold text-sm px-3 py-1 bg-gray-100 rounded-sm">已截止</span>`;
                 } else if (currentAppUser.role === 'guest') {
-                    rowHTML += `<button class="btn-goto-login px-4 py-1.5 text-sm font-bold rounded-sm border bg-matcha text-white border-matcha transition-colors shadow-sm">登入以報名</button>`;
+                    rowHTML += `<button class="btn-goto-login px-4 py-1.5 text-sm font-bold rounded-sm border bg-matcha text-white border-matcha transition-colors shadow-sm">填報</button>`;
                 } else {
                     rowHTML += `
                         <div class="flex gap-2">
@@ -722,7 +753,21 @@
                     const deadlineText = act.deadline ? `填報期限：${act.deadline}` : '無期限';
                     document.getElementById('view-deadline').innerText = `🗓 ${deadlineText} ${isExpired ? '(已截止)' : ''}`;
                     document.getElementById('view-deadline').className = `text-sm font-bold tracking-wide ${isExpired ? 'text-shu' : 'text-matchaDark'}`;
-                    document.getElementById('view-content').innerHTML = act.description;
+                    
+                    let contentHtml = act.description || '';
+                    
+                    // 若有附件，顯示在內容下方
+                    if (act.attachments && act.attachments.length > 0) {
+                        contentHtml += `<div class="mt-6 pt-4 border-t border-gray-200">
+                            <h4 class="font-bold text-sumi mb-3 flex items-center gap-2">📎 相關附件</h4>
+                            <ul class="flex flex-col gap-2">`;
+                        act.attachments.forEach(att => {
+                            contentHtml += `<li><a href="${att.url}" target="_blank" class="text-asagi hover:text-matcha hover:underline font-bold bg-gray-50 border border-gray-200 px-3 py-2 rounded-sm inline-flex items-center gap-2 w-full md:w-auto shadow-sm">🔗 ${att.name.replace(/</g, "&lt;")}</a></li>`;
+                        });
+                        contentHtml += `</ul></div>`;
+                    }
+                    
+                    document.getElementById('view-content').innerHTML = contentHtml;
                     document.getElementById('modal-view-activity').classList.remove('hidden');
                 }
                 return;
@@ -944,12 +989,20 @@
             initEditor();
             editingActivityId = actId;
             modalActivity.classList.remove('hidden');
+            const attachContainer = document.getElementById('attachments-edit-container');
+            attachContainer.innerHTML = ''; // 清空附件
+
             if (actId) {
                 document.getElementById('modal-edit-title').innerText = "❁ 修改活動";
                 const act = activities.find(a => a.id === actId);
                 document.getElementById('input-activity-title').value = act.title;
                 document.getElementById('input-activity-deadline').value = act.deadline || '';
                 quillInstance.root.innerHTML = act.description || '';
+                
+                // 載入現有附件
+                if (act.attachments && act.attachments.length > 0) {
+                    act.attachments.forEach(att => attachContainer.appendChild(createAttachmentRow(att.name, att.url)));
+                }
             } else {
                 document.getElementById('modal-edit-title').innerText = "❁ 新增活動";
                 document.getElementById('input-activity-title').value = '';
@@ -967,6 +1020,18 @@
             const deadline = document.getElementById('input-activity-deadline').value;
             const desc = quillInstance.root.innerHTML;
             
+            // 抓取所有附件
+            const attachNames = document.querySelectorAll('.attach-name');
+            const attachUrls = document.querySelectorAll('.attach-url');
+            const attachments = [];
+            for (let i = 0; i < attachNames.length; i++) {
+                const n = attachNames[i].value.trim();
+                const u = attachUrls[i].value.trim();
+                if (n || u) {
+                    attachments.push({ name: n || '未命名附件', url: u });
+                }
+            }
+            
             if (!title) {
                 await showCustomAlert("請填寫活動名稱！");
                 return;
@@ -981,6 +1046,7 @@
                         title: title, 
                         deadline: deadline, 
                         description: desc, 
+                        attachments: attachments,
                         updatedAt: Date.now() 
                     });
                 } else {
@@ -988,6 +1054,7 @@
                         title: title, 
                         deadline: deadline, 
                         description: desc, 
+                        attachments: attachments,
                         creatorId: currentAppUser.id, 
                         createdAt: Date.now()
                     });

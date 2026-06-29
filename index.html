@@ -698,7 +698,7 @@
                 
                 let deadlineText = "";
                 if (act.deadline) {
-                    deadlineText = `(期限：${act.deadline} ${isExpired ? '- 已截止' : ''})`;
+                    deadlineText = `(填報期限：${act.deadline} ${isExpired ? '- 已截止' : ''})`;
                 }
 
                 let attachmentsHTML = "";
@@ -745,10 +745,10 @@
 
                 if (canEdit) {
                     rowHTML += `
-                        <div class="flex gap-2 border-l-2 border-gray-200 pl-3">
-                            <button class="btn-view-results text-info hover:text-white hover:bg-info border border-transparent hover:border-info px-2 py-1 rounded-lg font-bold text-xs transition-colors" data-id="${act.id}" title="參加數：${totalParticipating}">📊 結果</button>
-                            <button class="btn-edit text-accent hover:text-white hover:bg-accent border border-transparent hover:border-accent px-2 py-1 rounded-lg font-bold text-xs transition-colors" data-id="${act.id}">編輯</button>
-                            <button class="btn-delete text-danger hover:text-white hover:bg-danger border border-transparent hover:border-danger px-2 py-1 rounded-lg font-bold text-xs transition-colors" data-id="${act.id}">刪除</button>
+                        <div class="flex gap-2 border-l-2 border-gray-200 pl-4 ml-1">
+                            <button class="btn-view-results text-info hover:text-white hover:bg-info border border-transparent hover:border-info px-3 py-1.5 rounded-lg font-bold text-base transition-colors" data-id="${act.id}" title="參加數：${totalParticipating}">📊 結果</button>
+                            <button class="btn-edit text-accent hover:text-white hover:bg-accent border border-transparent hover:border-accent px-3 py-1.5 rounded-lg font-bold text-base transition-colors" data-id="${act.id}">編輯</button>
+                            <button class="btn-delete text-danger hover:text-white hover:bg-danger border border-transparent hover:border-danger px-3 py-1.5 rounded-lg font-bold text-base transition-colors" data-id="${act.id}">刪除</button>
                         </div>
                     `;
                 }

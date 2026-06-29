@@ -249,7 +249,7 @@
         // =====================================================================
         // 【明確的 Firebase 資料庫設定區塊】
         // =====================================================================
-        const firebaseConfig = {
+       const firebaseConfig = {
   apiKey: "AIzaSyBKtmnwjdJZW-IbSd1fYEXUiKAifSHK4m4",
   authDomain: "signup-65cf0.firebaseapp.com",
   projectId: "signup-65cf0",
@@ -633,7 +633,8 @@
                     editorLang = SUNEDITOR_LANG.zh_tw;
                 }
                 
-                sunEditorInstance = SUNEDITOR.create('editor', {
+                // 修正：直接傳入 DOM 元素，避免 querySelector 解析錯誤
+                sunEditorInstance = SUNEDITOR.create(document.getElementById('editor'), {
                     buttonList: [
                         ['undo', 'redo'], ['font', 'fontSize', 'formatBlock'],
                         ['bold', 'underline', 'italic', 'fontColor', 'hiliteColor'],

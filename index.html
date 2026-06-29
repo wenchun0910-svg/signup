@@ -699,19 +699,20 @@
         // 富文本編輯器與 Modal (Activity)
         function initEditor() {
             if (!sunEditorInstance) {
-                // 防呆：若 SunEditor 未載入則不執行，避免發生錯誤
-                if (typeof SUNEDITOR === 'undefined') return;
-
+                // 加入防呆機制：若語系檔載入失敗則自動退回預設語系
                 let editorLang = undefined;
                 if (typeof SUNEDITOR_LANG !== 'undefined' && SUNEDITOR_LANG.zh_tw) {
                     editorLang = SUNEDITOR_LANG.zh_tw;
                 }
                 
+                // 修正：直接傳入 DOM 元素，避免 querySelector 解析錯誤
                 sunEditorInstance = SUNEDITOR.create(document.getElementById('editor'), {
                     buttonList: [
-                        ['undo', 'redo'], ['font', 'fontSize', 'formatBlock'],
-                        ['bold', 'underline', 'italic', 'fontColor', 'hiliteColor'],
-                        ['removeFormat', 'align', 'list', 'table', 'link', 'image']
+                        ['undo', 'redo'],
+                        ['bold', 'underline', 'italic', 'strike'],
+                        ['fontColor', 'hiliteColor'],
+                        ['removeFormat', 'align', 'list', 'table'],
+                        ['link', 'image', 'fullScreen']
                     ],
                     lang: editorLang, 
                     height: '250px',

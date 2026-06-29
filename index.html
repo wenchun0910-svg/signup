@@ -33,11 +33,6 @@
         }
     </script>
 
-    <!-- SunEditor (Rich Text Editor) -->
-    <link href="https://cdn.jsdelivr.net/npm/suneditor@latest/dist/css/suneditor.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/suneditor@latest/dist/suneditor.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/suneditor@latest/src/lang/zh_tw.js"></script>
-
     <style>
         body {
             background-color: #f4f0e6;
@@ -46,11 +41,11 @@
         }
         .japanese-border { border: 2px solid #c4a052; padding: 4px; background-clip: content-box; }
         .card-shadow { box-shadow: 4px 4px 0px 0px rgba(196, 160, 82, 0.2); }
-        .sun-editor { font-family: 'Noto Serif TC', serif !important; border-color: #c4a052 !important; }
-        .sun-editor-editable table { border-collapse: collapse; width: 100%; }
-        .sun-editor-editable table th, .sun-editor-editable table td { border: 1px solid #c4a052; padding: 8px; }
         .hidden { display: none !important; }
         .modal-overlay { background-color: rgba(43, 43, 43, 0.8); }
+        
+        /* 讓文字說明區域保留換行 */
+        .activity-desc { white-space: pre-wrap; }
     </style>
 </head>
 <body class="font-serif min-h-screen flex flex-col">
@@ -212,8 +207,8 @@
                     <input type="date" id="input-activity-deadline" class="w-full p-2 border border-kin rounded-sm bg-washi">
                 </div>
                 <div class="mb-4">
-                    <label class="block text-sm font-bold mb-2 text-sumi">活動說明 (可透過上方🔗圖示插入雲端硬碟連結)</label>
-                    <textarea id="editor" class="w-full"></textarea>
+                    <label class="block text-sm font-bold mb-2 text-sumi">活動說明 (可貼上雲端硬碟連結)</label>
+                    <textarea id="input-activity-desc" class="w-full p-2 border border-kin rounded-sm h-48 bg-washi resize-y" placeholder="請輸入活動說明..."></textarea>
                 </div>
             </div>
             <div class="p-4 border-t border-kin flex justify-end gap-3 bg-washi">
@@ -288,7 +283,6 @@
         let activities = [];        
         let registrations = [];     
         let unsubUsers, unsubActivities, unsubRegistrations;
-        let sunEditorInstance = null;
         let editingActivityId = null;
 
         // UI Elements
@@ -518,7 +512,7 @@
                             <button class="btn-delete text-shu font-bold text-sm" data-id="${act.id}">刪除</button>
                         </div>` : ''}
                     </div>
-                    <div class="p-4 flex-grow overflow-y-auto max-h-64 sun-editor-editable bg-transparent border-none">
+                    <div class="p-4 flex-grow overflow-y-auto max-h-64 bg-transparent border-none activity-desc">
                         ${act.description}
                     </div>
                     <div class="border-t border-kin p-4 bg-gray-50 flex flex-wrap items-center justify-between gap-4 mt-auto">
@@ -696,34 +690,9 @@
             }
         });
 
-        // 富文本編輯器與 Modal (Activity)
-        function initEditor() {
-            if (!sunEditorInstance) {
-                // 加入防呆機制：若語系檔載入失敗則自動退回預設語系
-                let editorLang = undefined;
-                if (typeof SUNEDITOR_LANG !== 'undefined' && SUNEDITOR_LANG.zh_tw) {
-                    editorLang = SUNEDITOR_LANG.zh_tw;
-                }
-                
-                // 修正：直接傳入 DOM 元素，避免 querySelector 解析錯誤
-                sunEditorInstance = SUNEDITOR.create(document.getElementById('editor'), {
-                    buttonList: [
-                        ['undo', 'redo'],
-                        ['bold', 'underline', 'italic', 'strike'],
-                        ['fontColor', 'hiliteColor'],
-                        ['removeFormat', 'align', 'list', 'table'],
-                        ['link', 'image', 'fullScreen']
-                    ],
-                    lang: editorLang, 
-                    height: '250px',
-                    defaultStyle: "font-family: 'Noto Serif TC', serif; font-size: 16px;"
-                });
-            }
-        }
-
+        // Modal (Activity)
         const modalActivity = document.getElementById('modal-activity');
         function openActivityModal(actId = null) {
-            initEditor();
             editingActivityId = actId;
             modalActivity.classList.remove('hidden');
             if (actId) {
@@ -731,12 +700,12 @@
                 const act = activities.find(a => a.id === actId);
                 document.getElementById('input-activity-title').value = act.title;
                 document.getElementById('input-activity-deadline').value = act.deadline || '';
-                if (sunEditorInstance) sunEditorInstance.setContents(act.description);
+                document.getElementById('input-activity-desc').value = act.description || '';
             } else {
                 document.getElementById('modal-title').innerText = "❁ 新增活動";
                 document.getElementById('input-activity-title').value = '';
                 document.getElementById('input-activity-deadline').value = '';
-                if (sunEditorInstance) sunEditorInstance.setContents('');
+                document.getElementById('input-activity-desc').value = '';
             }
         }
 
@@ -747,7 +716,7 @@
         document.getElementById('btn-save-activity').addEventListener('click', async () => {
             const title = document.getElementById('input-activity-title').value.trim();
             const deadline = document.getElementById('input-activity-deadline').value;
-            const desc = sunEditorInstance ? sunEditorInstance.getContents() : '';
+            const desc = document.getElementById('input-activity-desc').value;
             
             if (!title) {
                 // 使用自訂 Alert 取代原生 alert()，避免發生 iframe 被阻擋的問題

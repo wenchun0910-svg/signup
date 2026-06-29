@@ -244,7 +244,14 @@
         // =====================================================================
         // 【明確的 Firebase 資料庫設定區塊】
         // =====================================================================
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+     const firebaseConfig = {
+  apiKey: "AIzaSyBKtmnwjdJZW-IbSd1fYEXUiKAifSHK4m4",
+  authDomain: "signup-65cf0.firebaseapp.com",
+  projectId: "signup-65cf0",
+  storageBucket: "signup-65cf0.firebasestorage.app",
+  messagingSenderId: "684504534674",
+  appId: "1:684504534674:web:14ea67b603b234d166e04b"
+};
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);

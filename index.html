@@ -33,6 +33,11 @@
         }
     </script>
 
+    <!-- SunEditor (Rich Text Editor) - 完整版支援字型與顏色功能 -->
+    <link href="https://cdn.jsdelivr.net/npm/suneditor@latest/dist/css/suneditor.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/suneditor@latest/dist/suneditor.all.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/suneditor@latest/src/lang/zh_tw.js"></script>
+
     <style>
         body {
             background-color: #f4f0e6;
@@ -44,8 +49,25 @@
         .hidden { display: none !important; }
         .modal-overlay { background-color: rgba(43, 43, 43, 0.8); }
         
-        /* 讓文字說明區域保留換行 */
-        .activity-desc { white-space: pre-wrap; }
+        /* 仿造截圖風格的自訂 SunEditor 樣式 (虛線邊框) */
+        .sun-editor { 
+            font-family: 'Noto Serif TC', serif !important; 
+            border: 2px dashed #c4a052 !important; 
+            border-radius: 4px;
+            background-color: transparent !important;
+        }
+        .sun-editor .se-toolbar { 
+            background-color: transparent !important; 
+            border-bottom: 2px dashed #c4a052 !important; 
+            outline: none !important;
+            padding: 4px !important;
+        }
+        .sun-editor-editable { background-color: #f4f0e6 !important; }
+        .sun-editor .se-resizing-bar { display: none !important; } /* 隱藏底部拉伸條讓畫面更乾淨 */
+        
+        /* 活動內文表格預設樣式 */
+        .sun-editor-editable table { border-collapse: collapse; width: 100%; }
+        .sun-editor-editable table th, .sun-editor-editable table td { border: 1px solid #c4a052; padding: 8px; }
     </style>
 </head>
 <body class="font-serif min-h-screen flex flex-col">
@@ -207,8 +229,9 @@
                     <input type="date" id="input-activity-deadline" class="w-full p-2 border border-kin rounded-sm bg-washi">
                 </div>
                 <div class="mb-4">
-                    <label class="block text-sm font-bold mb-2 text-sumi">活動說明 (可貼上雲端硬碟連結)</label>
-                    <textarea id="input-activity-desc" class="w-full p-2 border border-kin rounded-sm h-48 bg-washi resize-y" placeholder="請輸入活動說明..."></textarea>
+                    <label class="block text-sm font-bold mb-2 text-sumi">活動說明 (支援多行與格式)</label>
+                    <!-- 編輯器將會取代這個 textarea -->
+                    <textarea id="editor" class="w-full"></textarea>
                 </div>
             </div>
             <div class="p-4 border-t border-kin flex justify-end gap-3 bg-washi">
@@ -272,7 +295,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         
-        // 資料庫前綴路徑識別碼
+        // 資料庫前綴路徑識別碼 (為避免與其他專案衝突，Sandbox 環境有固定規範)
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'wafu-school-app';
         // =====================================================================
         
@@ -283,6 +306,7 @@
         let activities = [];        
         let registrations = [];     
         let unsubUsers, unsubActivities, unsubRegistrations;
+        let sunEditorInstance = null;
         let editingActivityId = null;
 
         // UI Elements
@@ -362,7 +386,7 @@
             unsubUsers = onSnapshot(usersRef, async (snapshot) => {
                 appUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 
-                // 自動內建管理員防呆機制 (若資料庫無任何人，自動建 admin)
+                // 自動內建管理員防呆機制
                 if (appUsers.length === 0 && fbUser) {
                     try {
                         await addDoc(usersRef, { username: 'admin', password: 'admin', role: 'admin', createdAt: Date.now() });
@@ -494,6 +518,7 @@
                 const regStatus = userReg ? userReg.status : 'none';
                 const totalParticipating = registrations.filter(r => r.activityId === act.id && r.status === 'participating').length;
 
+                // 處理填報期限與過期狀態
                 const isExpired = act.deadline && new Date(act.deadline + 'T23:59:59') < new Date();
                 const deadlineText = act.deadline ? `填報期限：${act.deadline}` : '無期限';
 
@@ -512,7 +537,7 @@
                             <button class="btn-delete text-shu font-bold text-sm" data-id="${act.id}">刪除</button>
                         </div>` : ''}
                     </div>
-                    <div class="p-4 flex-grow overflow-y-auto max-h-64 bg-transparent border-none activity-desc">
+                    <div class="p-4 flex-grow overflow-y-auto max-h-64 sun-editor-editable bg-transparent border-none">
                         ${act.description}
                     </div>
                     <div class="border-t border-kin p-4 bg-gray-50 flex flex-wrap items-center justify-between gap-4 mt-auto">
@@ -552,28 +577,20 @@
                 openActivityModal(actId);
             }
             else if (t.classList.contains('btn-delete')) {
-                // 使用自訂 Confirm 取代原生 confirm()
+                // 修正：使用自訂的 showCustomAlert 來取代會卡住的 confirm()
                 if (await showCustomAlert("確定要刪除這項活動嗎？", true)) {
-                    try {
-                        await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'activities', actId));
-                    } catch (error) {
-                        await showCustomAlert("刪除失敗：" + error.message);
-                    }
+                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'activities', actId));
                 }
             }
             else if (t.classList.contains('btn-reg-yes') || t.classList.contains('btn-reg-no')) {
                 const desired = t.classList.contains('btn-reg-yes') ? 'participating' : 'not_participating';
                 const exReg = registrations.find(r => r.activityId === actId && r.userId === currentAppUser.id);
-                try {
-                    if (exReg) {
-                        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registrations', exReg.id), { status: desired });
-                    } else {
-                        await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'registrations'), {
-                            activityId: actId, userId: currentAppUser.id, status: desired, createdAt: Date.now()
-                        });
-                    }
-                } catch (error) {
-                    await showCustomAlert("報名狀態更新失敗：" + error.message);
+                if (exReg) {
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registrations', exReg.id), { status: desired });
+                } else {
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'registrations'), {
+                        activityId: actId, userId: currentAppUser.id, status: desired, createdAt: Date.now()
+                    });
                 }
             }
         });
@@ -606,23 +623,15 @@
 
         document.getElementById('users-table-body').addEventListener('change', async (e) => {
             if (e.target.classList.contains('role-select')) {
-                try {
-                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'appUsers', e.target.getAttribute('data-id')), { role: e.target.value });
-                } catch (error) {
-                    await showCustomAlert("權限變更失敗：" + error.message);
-                }
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'appUsers', e.target.getAttribute('data-id')), { role: e.target.value });
             }
         });
 
         document.getElementById('users-table-body').addEventListener('click', async (e) => {
             if (e.target.classList.contains('btn-del-user')) {
-                // 使用自訂 Confirm 取代原生 confirm()
+                // 修正：使用自訂的 showCustomAlert
                 if(await showCustomAlert('確定刪除此帳號？', true)) {
-                    try {
-                        await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'appUsers', e.target.getAttribute('data-id')));
-                    } catch (error) {
-                        await showCustomAlert("刪除失敗：" + error.message);
-                    }
+                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'appUsers', e.target.getAttribute('data-id')));
                 }
             }
         });
@@ -637,14 +646,10 @@
             if (!usr || !pwd) { msg.textContent = '填寫不完整'; msg.className = 'text-shu text-sm font-bold ml-2'; return; }
             if (appUsers.some(u => u.username === usr)) { msg.textContent = '帳號已存在'; msg.className = 'text-shu text-sm font-bold ml-2'; return; }
 
-            try {
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'appUsers'), { username: usr, password: pwd, role: role, createdAt: Date.now() });
-                msg.textContent = '新增成功！'; msg.className = 'text-matcha text-sm font-bold ml-2';
-                document.getElementById('input-new-username').value = ''; document.getElementById('input-new-password').value = '';
-                setTimeout(() => msg.textContent = '', 3000);
-            } catch(e) {
-                msg.textContent = '新增失敗'; msg.className = 'text-shu text-sm font-bold ml-2';
-            }
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'appUsers'), { username: usr, password: pwd, role: role, createdAt: Date.now() });
+            msg.textContent = '新增成功！'; msg.className = 'text-matcha text-sm font-bold ml-2';
+            document.getElementById('input-new-username').value = ''; document.getElementById('input-new-password').value = '';
+            setTimeout(() => msg.textContent = '', 3000);
         });
 
         document.getElementById('btn-bulk-import').addEventListener('click', async () => {
@@ -656,10 +661,8 @@
             for (const line of lines) {
                 const [usr, pwd, role = 'student'] = line.split(',').map(s => s.trim());
                 if (usr && pwd && !appUsers.some(u => u.username === usr)) {
-                    try {
-                        await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'appUsers'), { username: usr, password: pwd, role: role, createdAt: Date.now() });
-                        success++;
-                    } catch(e) {}
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'appUsers'), { username: usr, password: pwd, role: role, createdAt: Date.now() });
+                    success++;
                 }
             }
             msg.textContent = `匯入成功: ${success} 筆`; msg.className = 'text-matcha font-bold text-sm ml-2';
@@ -690,9 +693,31 @@
             }
         });
 
-        // Modal (Activity)
+        // 富文本編輯器與 Modal (Activity)
+        function initEditor() {
+            if (!sunEditorInstance) {
+                let editorLang = undefined;
+                if (typeof SUNEDITOR_LANG !== 'undefined' && SUNEDITOR_LANG.zh_tw) {
+                    editorLang = SUNEDITOR_LANG.zh_tw;
+                }
+                
+                // 根據使用者截圖配置：字型、大小、顏色、B、I、U、連結
+                sunEditorInstance = SUNEDITOR.create(document.getElementById('editor'), {
+                    buttonList: [
+                        ['font', 'fontSize', 'fontColor'],
+                        ['bold', 'italic', 'underline'],
+                        ['link']
+                    ],
+                    lang: editorLang, 
+                    height: '220px',
+                    defaultStyle: "font-family: 'Noto Serif TC', serif; font-size: 16px;"
+                });
+            }
+        }
+
         const modalActivity = document.getElementById('modal-activity');
         function openActivityModal(actId = null) {
+            initEditor();
             editingActivityId = actId;
             modalActivity.classList.remove('hidden');
             if (actId) {
@@ -700,12 +725,12 @@
                 const act = activities.find(a => a.id === actId);
                 document.getElementById('input-activity-title').value = act.title;
                 document.getElementById('input-activity-deadline').value = act.deadline || '';
-                document.getElementById('input-activity-desc').value = act.description || '';
+                sunEditorInstance.setContents(act.description);
             } else {
                 document.getElementById('modal-title').innerText = "❁ 新增活動";
                 document.getElementById('input-activity-title').value = '';
                 document.getElementById('input-activity-deadline').value = '';
-                document.getElementById('input-activity-desc').value = '';
+                sunEditorInstance.setContents('');
             }
         }
 
@@ -716,10 +741,10 @@
         document.getElementById('btn-save-activity').addEventListener('click', async () => {
             const title = document.getElementById('input-activity-title').value.trim();
             const deadline = document.getElementById('input-activity-deadline').value;
-            const desc = document.getElementById('input-activity-desc').value;
+            const desc = sunEditorInstance.getContents();
             
             if (!title) {
-                // 使用自訂 Alert 取代原生 alert()，避免發生 iframe 被阻擋的問題
+                // 修正：使用自訂 showCustomAlert 取代原生的 alert()
                 await showCustomAlert("請填寫活動名稱！");
                 return;
             }
@@ -747,7 +772,6 @@
                 modalActivity.classList.add('hidden');
                 btn.disabled = false; btn.innerText = '儲存';
             } catch (error) {
-                console.error("Save Activity Error: ", error);
                 btn.disabled = false; btn.innerText = '儲存';
                 await showCustomAlert("儲存失敗：" + error.message);
             }

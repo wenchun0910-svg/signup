@@ -206,8 +206,13 @@
                     <label class="block text-sm font-bold mb-2 text-sumi">活動名稱 (標題)</label>
                     <input type="text" id="input-activity-title" class="w-full p-2 border border-kin rounded-sm" placeholder="輸入標題">
                 </div>
+                <!-- 新增填報期限欄位 -->
                 <div class="mb-4">
-                    <label class="block text-sm font-bold mb-2 text-sumi">活動說明</label>
+                    <label class="block text-sm font-bold mb-2 text-sumi">填報期限</label>
+                    <input type="date" id="input-activity-deadline" class="w-full p-2 border border-kin rounded-sm bg-washi">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-bold mb-2 text-sumi">活動說明 (可透過上方🔗圖示插入雲端硬碟連結)</label>
                     <textarea id="editor" class="w-full"></textarea>
                 </div>
             </div>
@@ -244,7 +249,7 @@
         // =====================================================================
         // 【明確的 Firebase 資料庫設定區塊】
         // =====================================================================
-     const firebaseConfig = {
+        const firebaseConfig = {
   apiKey: "AIzaSyBKtmnwjdJZW-IbSd1fYEXUiKAifSHK4m4",
   authDomain: "signup-65cf0.firebaseapp.com",
   projectId: "signup-65cf0",
@@ -446,12 +451,19 @@
                 const regStatus = userReg ? userReg.status : 'none';
                 const totalParticipating = registrations.filter(r => r.activityId === act.id && r.status === 'participating').length;
 
+                // 新增：處理填報期限與過期狀態
+                const isExpired = act.deadline && new Date(act.deadline + 'T23:59:59') < new Date();
+                const deadlineText = act.deadline ? `填報期限：${act.deadline}` : '無期限';
+
                 const card = document.createElement('div');
                 card.className = "bg-white rounded-sm japanese-border card-shadow flex flex-col h-full";
                 
-                card.innerHTML = `
+                let cardHTML = `
                     <div class="bg-washi border-b border-kin p-4 flex justify-between items-start">
-                        <h3 class="text-lg md:text-xl font-bold text-sumi leading-snug">${act.title.replace(/</g, "&lt;")}</h3>
+                        <div>
+                            <h3 class="text-lg md:text-xl font-bold text-sumi leading-snug">${act.title.replace(/</g, "&lt;")}</h3>
+                            <p class="text-sm font-bold mt-1 ${isExpired ? 'text-shu' : 'text-matchaDark'}">🗓 ${deadlineText} ${isExpired ? '(已截止)' : ''}</p>
+                        </div>
                         ${canEdit ? `
                         <div class="flex gap-2 shrink-0 ml-2">
                             <button class="btn-edit text-asagi font-bold text-sm" data-id="${act.id}">編輯</button>
@@ -464,16 +476,29 @@
                     <div class="border-t border-kin p-4 bg-gray-50 flex flex-wrap items-center justify-between gap-4 mt-auto">
                         <div class="flex items-center gap-2">
                             <span class="text-sm font-bold text-gray-600">您的意願：</span>
+                `;
+
+                if (isExpired) {
+                    // 若已過期，顯示已截止狀態
+                    cardHTML += `<span class="text-gray-500 font-bold text-sm px-3 py-1 bg-gray-200 border border-gray-300 rounded-sm">報名已截止</span>`;
+                } else {
+                    // 若未過期，顯示正常按鈕
+                    cardHTML += `
                             <button class="btn-reg-yes px-2 py-1 text-xs md:text-sm font-bold rounded-sm border ${regStatus === 'participating' ? 'bg-matcha text-white border-matcha' : 'bg-white text-matcha border-matcha'} transition-colors" data-id="${act.id}">
                                 ${regStatus === 'participating' ? '✓ 已參加' : '我要參加'}
                             </button>
                             <button class="btn-reg-no px-2 py-1 text-xs md:text-sm font-bold rounded-sm border ${regStatus === 'not_participating' ? 'bg-gray-500 text-white border-gray-500' : 'bg-white text-gray-500 border-gray-500'} transition-colors" data-id="${act.id}">
                                 ${regStatus === 'not_participating' ? '✗ 已婉拒' : '不參加'}
                             </button>
+                    `;
+                }
+
+                cardHTML += `
                         </div>
                         ${canEdit ? `<div class="text-sm font-bold text-asagi">目前參加人數：${totalParticipating} 人</div>` : ''}
                     </div>
                 `;
+                card.innerHTML = cardHTML;
                 container.appendChild(card);
             });
         }
@@ -592,7 +617,7 @@
             
             try {
                 await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'appUsers', currentAppUser.id), { password: newPwd });
-                msg.textContent = '修改成功！即將關閉...'; msg.className = 'text-matcha';
+                msg.textContent = '修改成功！即嘴關閉...'; msg.className = 'text-matcha';
                 setTimeout(() => modalPwd.classList.add('hidden'), 1500);
             } catch (e) {
                 msg.textContent = '失敗: ' + e.message; msg.className = 'text-shu';
@@ -602,13 +627,20 @@
         // 富文本編輯器與 Modal (Activity)
         function initEditor() {
             if (!sunEditorInstance) {
+                // 加入防呆機制：若語系檔載入失敗則自動退回預設語系
+                let editorLang = undefined;
+                if (typeof SUNEDITOR_LANG !== 'undefined' && SUNEDITOR_LANG.zh_tw) {
+                    editorLang = SUNEDITOR_LANG.zh_tw;
+                }
+                
                 sunEditorInstance = SUNEDITOR.create('editor', {
                     buttonList: [
                         ['undo', 'redo'], ['font', 'fontSize', 'formatBlock'],
                         ['bold', 'underline', 'italic', 'fontColor', 'hiliteColor'],
                         ['removeFormat', 'align', 'list', 'table', 'link', 'image']
                     ],
-                    lang: SUNEDITOR_LANG.zh_tw, height: '250px',
+                    lang: editorLang, 
+                    height: '250px',
                     defaultStyle: "font-family: 'Noto Serif TC', serif; font-size: 16px;"
                 });
             }
@@ -623,10 +655,12 @@
                 document.getElementById('modal-title').innerText = "❁ 修改活動";
                 const act = activities.find(a => a.id === actId);
                 document.getElementById('input-activity-title').value = act.title;
+                document.getElementById('input-activity-deadline').value = act.deadline || '';
                 sunEditorInstance.setContents(act.description);
             } else {
                 document.getElementById('modal-title').innerText = "❁ 新增活動";
                 document.getElementById('input-activity-title').value = '';
+                document.getElementById('input-activity-deadline').value = '';
                 sunEditorInstance.setContents('');
             }
         }
@@ -637,17 +671,31 @@
 
         document.getElementById('btn-save-activity').addEventListener('click', async () => {
             const title = document.getElementById('input-activity-title').value.trim();
+            const deadline = document.getElementById('input-activity-deadline').value;
             const desc = sunEditorInstance.getContents();
-            if (!title) return;
+            
+            if (!title) {
+                alert("請填寫活動名稱！");
+                return;
+            }
 
             const btn = document.getElementById('btn-save-activity');
             btn.disabled = true; btn.innerText = '儲存中...';
 
             if (editingActivityId) {
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'activities', editingActivityId), { title: title, description: desc, updatedAt: Date.now() });
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'activities', editingActivityId), { 
+                    title: title, 
+                    deadline: deadline, 
+                    description: desc, 
+                    updatedAt: Date.now() 
+                });
             } else {
                 await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'activities'), {
-                    title: title, description: desc, creatorId: currentAppUser.id, createdAt: Date.now()
+                    title: title, 
+                    deadline: deadline, 
+                    description: desc, 
+                    creatorId: currentAppUser.id, 
+                    createdAt: Date.now()
                 });
             }
             modalActivity.classList.add('hidden');

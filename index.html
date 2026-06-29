@@ -33,9 +33,9 @@
         }
     </script>
 
-    <!-- SunEditor (Rich Text Editor) -->
+    <!-- SunEditor (Rich Text Editor) - 已更改為 all.min.js 完整版以支援所有功能 -->
     <link href="https://cdn.jsdelivr.net/npm/suneditor@latest/dist/css/suneditor.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/suneditor@latest/dist/suneditor.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/suneditor@latest/dist/suneditor.all.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/suneditor@latest/src/lang/zh_tw.js"></script>
 
     <style>
@@ -249,7 +249,7 @@
         // =====================================================================
         // 【明確的 Firebase 資料庫設定區塊】
         // =====================================================================
-       const firebaseConfig = {
+      const firebaseConfig = {
   apiKey: "AIzaSyBKtmnwjdJZW-IbSd1fYEXUiKAifSHK4m4",
   authDomain: "signup-65cf0.firebaseapp.com",
   projectId: "signup-65cf0",
@@ -617,7 +617,7 @@
             
             try {
                 await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'appUsers', currentAppUser.id), { password: newPwd });
-                msg.textContent = '修改成功！即嘴關閉...'; msg.className = 'text-matcha';
+                msg.textContent = '修改成功！即將關閉...'; msg.className = 'text-matcha';
                 setTimeout(() => modalPwd.classList.add('hidden'), 1500);
             } catch (e) {
                 msg.textContent = '失敗: ' + e.message; msg.className = 'text-shu';

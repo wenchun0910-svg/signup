@@ -33,7 +33,7 @@
         }
     </script>
 
-    <!-- Quill (Rich Text Editor) - 統一使用 Quill，最穩定且支援度高 -->
+    <!-- Quill (Rich Text Editor) - 統一使用穩定版 Quill -->
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
 
@@ -223,7 +223,7 @@
         </main>
     </div>
 
-    <!-- 檢視活動說明 Modal (學生/家長/訪客用來開新視窗觀看) -->
+    <!-- 檢視活動說明 Modal (點擊開啟新視窗) -->
     <div id="modal-view-activity" class="hidden fixed inset-0 modal-overlay z-[50] flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-4xl max-h-[90vh] flex flex-col rounded-sm japanese-border shadow-2xl">
             <div class="p-4 border-b border-kin flex justify-between items-center bg-washi">
@@ -360,7 +360,7 @@
         let unsubUsers, unsubActivities, unsubRegistrations;
         let quillInstance = null; 
         let editingActivityId = null;
-        let viewingResultsActivityId = null; // 用於追蹤匯出對象
+        let viewingResultsActivityId = null; 
 
         const elLoading = document.getElementById('loading-screen');
         const elAuth = document.getElementById('auth-screen');
@@ -372,7 +372,7 @@
 
         const roleMap = { 'admin': '管理員', 'collaborator': '協作者', 'student': '學生/家長', 'guest': '訪客' };
 
-        // 自訂 Alert/Confirm 邏輯機制 (防網頁卡死)
+        // 自訂 Alert/Confirm 邏輯機制
         function showCustomAlert(message, isConfirm = false) {
             return new Promise((resolve) => {
                 const modal = document.getElementById('modal-alert');
@@ -426,7 +426,7 @@
             } else {
                 stopDataListeners();
                 fbUser = null; currentAppUser = null;
-                setGuestMode(); // 退回訪客模式
+                setGuestMode(); // 未登入預設切換為訪客模式
             }
         });
 
@@ -612,9 +612,10 @@
                 if (isExpired) {
                     cardHTML += `<span class="text-gray-500 font-bold text-sm px-3 py-1 bg-gray-200 border border-gray-300 rounded-sm">報名已截止</span>`;
                 } else if (currentAppUser.role === 'guest') {
-                    // 修復登入以報名的點擊事件 (透過上方事件代理處理)
+                    // 若為訪客，顯示登入以報名按鈕
                     cardHTML += `<button class="btn-goto-login flex-1 sm:flex-none px-4 py-1.5 text-sm font-bold rounded-sm border bg-matcha text-white border-matcha transition-colors shadow-sm">登入以報名</button>`;
                 } else {
+                    // 若已登入(學生/家長/管理員)，顯示報名意願按鈕
                     cardHTML += `
                             <button class="btn-reg-yes flex-1 sm:flex-none px-3 py-1.5 text-sm font-bold rounded-sm border ${regStatus === 'participating' ? 'bg-matcha text-white border-matcha' : 'bg-white text-matcha hover:bg-matcha hover:text-white border-matcha'} transition-colors shadow-sm" data-id="${act.id}">
                                 ${regStatus === 'participating' ? '✓ 已參加' : '我要參加'}

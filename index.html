@@ -188,6 +188,9 @@
                 </div>
                 <!-- 容器改為單欄的 flex-col，呈現條列式 -->
                 <div id="activities-container" class="flex flex-col gap-4"></div>
+                
+                <!-- 新增：分頁按鈕容器 -->
+                <div id="pagination-controls" class="flex justify-center items-center mt-8 gap-2 flex-wrap"></div>
             </section>
 
             <!-- 用戶管理區塊 -->
@@ -416,6 +419,10 @@
         let quillInstance = null; 
         let editingActivityId = null;
         let viewingResultsActivityId = null; 
+
+        // 新增：分頁全域變數
+        let currentPage = 1;
+        const itemsPerPage = 5;
 
         // 附件相關邏輯
         function createAttachmentRow(name = '', url = '') {
@@ -651,6 +658,8 @@
                 tAct.classList.remove('border-transparent', 'text-gray-500');
                 tUsr.classList.remove('border-b-4', 'border-primary', 'text-primary'); 
                 tUsr.classList.add('border-transparent', 'text-gray-500');
+                // 切換回來時重置為第一頁
+                currentPage = 1;
                 renderActivities(); 
             } else {
                 vAct.classList.add('hidden'); vUsr.classList.remove('hidden');
@@ -684,22 +693,42 @@
         // 條列式活動渲染
         function renderActivities() {
             const container = document.getElementById('activities-container');
+            const paginationContainer = document.getElementById('pagination-controls');
             container.innerHTML = '';
+            
             if (activities.length === 0) {
-                container.innerHTML = `<div class="text-center py-10 text-gray-600 font-bold bg-white/50 rounded-xl">🦒 尚無調查活動。</div>`; return;
+                container.innerHTML = `<div class="text-center py-10 text-gray-600 font-bold bg-white/50 rounded-xl">🦒 尚無調查活動。</div>`; 
+                paginationContainer.innerHTML = '';
+                return;
             }
 
-            activities.forEach(act => {
+            // 計算分頁
+            const totalPages = Math.ceil(activities.length / itemsPerPage);
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+            
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            // 擷取當前頁面的資料 (最新的已在監聽器中由 .sort 排序過，所以這裡直接 slice 取出就是最新)
+            const paginatedActivities = activities.slice(startIndex, endIndex);
+
+            paginatedActivities.forEach(act => {
                 const canEdit = currentAppUser.role === 'admin' || (currentAppUser.role === 'collaborator' && act.creatorId === currentAppUser.id);
                 const userReg = registrations.find(r => r.activityId === act.id && r.userId === currentAppUser.id);
                 const regStatus = userReg ? userReg.status : 'none';
                 const totalParticipating = registrations.filter(r => r.activityId === act.id && r.status === 'participating').length;
+                
+                // 新增：計算總填報人數 (包含參加與不參加)
+                const totalResponded = registrations.filter(r => r.activityId === act.id).length;
+                
                 const isExpired = act.deadline && new Date(act.deadline + 'T23:59:59') < new Date();
                 
                 let deadlineText = "";
                 if (act.deadline) {
-                    // 修改：期限 -> 填報期限
-                    deadlineText = `(填報期限：${act.deadline} ${isExpired ? '- 已截止' : ''})`;
+                    // 修改：加入已填報人數
+                    deadlineText = `(填報期限：${act.deadline} ${isExpired ? '- 已截止' : ''} | 已填報：${totalResponded} 人)`;
+                } else {
+                    deadlineText = `(已填報：${totalResponded} 人)`;
                 }
 
                 let attachmentsHTML = "";
@@ -759,6 +788,58 @@
                 listRow.innerHTML = rowHTML;
                 container.appendChild(listRow);
             });
+            
+            // 渲染分頁按鈕
+            renderPagination(totalPages);
+        }
+
+        // 新增：渲染分頁控制 UI
+        function renderPagination(totalPages) {
+            const controls = document.getElementById('pagination-controls');
+            controls.innerHTML = '';
+            
+            if (totalPages <= 1) return; // 只有一頁時不顯示分頁按鈕
+
+            // 上一頁按鈕
+            const btnPrev = document.createElement('button');
+            btnPrev.innerText = '‹ 上一頁';
+            btnPrev.className = `px-3 py-1.5 rounded-lg font-bold border-2 transition-colors ${currentPage === 1 ? 'text-gray-400 border-gray-300 bg-gray-50 cursor-not-allowed' : 'text-textDark border-accent bg-white hover:bg-accent hover:text-white'}`;
+            btnPrev.disabled = currentPage === 1;
+            btnPrev.onclick = () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderActivities();
+                    window.scrollTo({ top: 0, behavior: 'smooth' }); // 換頁後捲動到頂部
+                }
+            };
+            controls.appendChild(btnPrev);
+
+            // 數字頁碼按鈕
+            for (let i = 1; i <= totalPages; i++) {
+                const btnPage = document.createElement('button');
+                btnPage.innerText = i;
+                btnPage.className = `w-10 h-10 flex items-center justify-center rounded-lg font-bold border-2 transition-colors ${currentPage === i ? 'bg-primary border-primary text-white shadow-sm' : 'bg-white border-accent text-textDark hover:bg-accent hover:text-white'}`;
+                btnPage.onclick = () => {
+                    currentPage = i;
+                    renderActivities();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                };
+                controls.appendChild(btnPage);
+            }
+
+            // 下一頁按鈕
+            const btnNext = document.createElement('button');
+            btnNext.innerText = '下一頁 ›';
+            btnNext.className = `px-3 py-1.5 rounded-lg font-bold border-2 transition-colors ${currentPage === totalPages ? 'text-gray-400 border-gray-300 bg-gray-50 cursor-not-allowed' : 'text-textDark border-accent bg-white hover:bg-accent hover:text-white'}`;
+            btnNext.disabled = currentPage === totalPages;
+            btnNext.onclick = () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    renderActivities();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            };
+            controls.appendChild(btnNext);
         }
 
         // 活動列表點擊事件處理
